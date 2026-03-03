@@ -163,6 +163,7 @@ def run_single_repeat_training(
             model = kwargs.get("model")
             if model is None:
                 return control
+            model.eval()
             result = evaluate_step(
                 model=model,
                 tokenizer=self.tokenizer,
@@ -172,6 +173,7 @@ def run_single_repeat_training(
                 eval_test_examples=self.eval_test_examples,
                 seed=self.seed,
             )
+            model.train()
             append_eval_result(self.eval_file, result)
             return control
 
@@ -189,7 +191,7 @@ def run_single_repeat_training(
     model = AutoLigerKernelForCausalLM.from_pretrained(
         config.model_name,
         quantization_config=bnb_config,
-        attn_implementation="sdpa",
+        attn_implementation="eager",
         torch_dtype=torch.bfloat16,
     )
     model.enable_input_require_grads()
@@ -229,7 +231,7 @@ def run_single_repeat_training(
         learning_rate=config.lr,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim="adamw_torch",
+        optim="adamw_torch_fused",
         logging_steps=10,
         save_steps=config.eval_every,
         seed=config.seed + repeat_id,
@@ -237,6 +239,7 @@ def run_single_repeat_training(
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         bf16=True,
+        tf32=True,
     )
 
     collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=-100, pad_to_multiple_of=8)
