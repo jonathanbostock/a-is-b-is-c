@@ -3,11 +3,12 @@ from __future__ import annotations
 import argparse
 from datetime import datetime
 from pathlib import Path
+import random
 from typing import Any
 
 import yaml
 
-from .dataset import PromptExample, build_run_data, write_examples_jsonl, write_metadata
+from .dataset import Edge, PromptExample, all_directed_edges, build_run_data, write_examples_jsonl, write_metadata
 from .plot import plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
 
@@ -52,6 +53,38 @@ def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
     return merged
 
 
+def _resolve_topologies(config: dict[str, Any]) -> tuple[list[Edge], list[Edge] | None]:
+    if "train_p" in config:
+        n_categories = int(config["n_categories"])
+        train_p = float(config["train_p"])
+        seed = int(config["seed"])
+
+        all_edges = all_directed_edges(n_categories)
+        total = len(all_edges)
+        random.Random(seed).shuffle(all_edges)
+
+        n_train = int(train_p * total)
+        topology_train = all_edges[:n_train]
+
+        if "eval_p" in config:
+            eval_p = float(config["eval_p"])
+            effective_eval_p = min(eval_p, 1.0 - train_p)
+            n_eval = int(effective_eval_p * total)
+            topology_eval: list[Edge] | None = all_edges[total - n_eval :] if n_eval > 0 else []
+        else:
+            topology_eval = None
+
+        return topology_train, topology_eval
+    else:
+        topology_train = [(int(s), int(t)) for s, t in config["train_topology"]]
+        topology_eval = (
+            [(int(s), int(t)) for s, t in config["eval_topology"]]
+            if "eval_topology" in config
+            else None
+        )
+        return topology_train, topology_eval
+
+
 def _timestamped_output_dir(base_output_dir: Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return base_output_dir.parent / f"{base_output_dir.name}_{timestamp}"
@@ -65,14 +98,14 @@ def main() -> None:
     output_dir = _timestamped_output_dir(base_output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    topology_train, topology_eval = _resolve_topologies(config)
+
     run_data = build_run_data(
         n_repeats=int(config["n_repeats"]),
         n_categories=int(config["n_categories"]),
         k=int(config["k"]),
-        topology_train=[(int(source), int(target)) for source, target in config["train_topology"]],
-        topology_eval=[(int(source), int(target)) for source, target in config["eval_topology"]]
-        if "eval_topology" in config
-        else None,
+        topology_train=topology_train,
+        topology_eval=topology_eval,
         n_train_templates=int(config["n_train_templates"]),
         n_eval_templates=int(config["n_eval_templates"]),
         seed=int(config["seed"]),
@@ -92,7 +125,7 @@ def main() -> None:
             max_steps = int(config["num_steps"])
             eval_every = int(config["eval_every"])
         else:
-            n_train_edges = len(config["train_topology"])
+            n_train_edges = len(topology_train)
             total_samples = int(config["examples_per_edge_per_k"]) * int(config["k"]) * n_train_edges
             samples_per_step = int(config["batch_size"]) * int(config["grad_accum"])
             max_steps = max(1, total_samples // samples_per_step)
@@ -124,7 +157,7 @@ def main() -> None:
             eval_results_file=output_dir / "eval_results.json",
             output_dir=output_dir,
             n_categories=int(config["n_categories"]),
-            topology_train=[(int(source), int(target)) for source, target in config["train_topology"]],
+            topology_train=topology_train,
         )
 
 
