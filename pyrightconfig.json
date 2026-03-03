@@ -1,0 +1,13 @@
+{
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "standard",
+  "include": [
+    "a_is_b_is_c",
+    "main.py",
+    "run.py"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".venv"
+  ]
+}

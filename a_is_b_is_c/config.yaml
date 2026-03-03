@@ -1,0 +1,19 @@
+n_repeats: 5
+k: 4
+n_categories: 3
+topology:
+  - [0, 1]
+  - [1, 2]
+n_train_templates: 8
+n_eval_templates: 4
+max_steps: 500
+eval_every: 50
+lr: 0.0002
+batch_size: 8
+grad_accum: 2
+lora_r: 16
+seed: 42
+output_dir: ./runs/default
+model_name: unsloth/gemma-2-2b
+max_seq_length: 256
+skip_train: false
