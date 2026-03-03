@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -10,21 +10,6 @@ import yaml
 from .dataset import PromptExample, build_run_data, write_examples_jsonl, write_metadata
 from .plot import plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
-
-
-def _parse_topology(raw: str) -> list[tuple[int, int]]:
-    parsed = json.loads(raw)
-    if not isinstance(parsed, list):
-        msg = "Topology must be a JSON list of [source, target] pairs."
-        raise ValueError(msg)
-    edges: list[tuple[int, int]] = []
-    for item in parsed:
-        if not isinstance(item, list | tuple) or len(item) != 2:
-            msg = f"Invalid edge entry: {item}"
-            raise ValueError(msg)
-        source, target = item
-        edges.append((int(source), int(target)))
-    return edges
 
 
 def _build_repeat_buckets(examples: list[PromptExample]) -> dict[int, list[PromptExample]]:
@@ -36,51 +21,47 @@ def _build_repeat_buckets(examples: list[PromptExample]) -> dict[int, list[Promp
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Bostock matching-game topology experiment")
-    parser.add_argument("--config", type=str, default="a_is_b_is_c/config.yaml", help="Path to YAML config")
-    parser.add_argument("--topology", type=str, default=None, help='JSON edge list, e.g. "[[0,1],[1,2]]"')
-    parser.add_argument("--n_categories", type=int, default=None)
-    parser.add_argument("--n_repeats", type=int, default=None)
-    parser.add_argument("--k", type=int, default=None)
-    parser.add_argument("--n_train_templates", type=int, default=None)
-    parser.add_argument("--n_eval_templates", type=int, default=None)
-    parser.add_argument("--max_steps", type=int, default=None)
-    parser.add_argument("--eval_every", type=int, default=None)
-    parser.add_argument("--lr", type=float, default=None)
-    parser.add_argument("--batch_size", type=int, default=None)
-    parser.add_argument("--grad_accum", type=int, default=None)
-    parser.add_argument("--lora_r", type=int, default=None)
-    parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--output_dir", type=str, default=None)
-    parser.add_argument("--model_name", type=str, default=None)
-    parser.add_argument("--max_seq_length", type=int, default=None)
-    parser.add_argument(
-        "--skip_train",
-        action="store_true",
-        help="Generate data and metadata only, skipping fine-tuning and eval",
-    )
+    parser.add_argument("config", type=str, help="Path to a .yaml experiment config file")
     return parser.parse_args()
 
 
 def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
-    with Path(cli_args.config).open("r", encoding="utf-8") as handle:
+    config_path = Path(cli_args.config)
+    if config_path.suffix != ".yaml":
+        msg = f"Config file must end with .yaml: {config_path}"
+        raise ValueError(msg)
+
+    default_config_path = Path("a_is_b_is_c/config.yaml")
+    with default_config_path.open("r", encoding="utf-8") as handle:
+        default_config = yaml.safe_load(handle)
+
+    with config_path.open("r", encoding="utf-8") as handle:
         config = yaml.safe_load(handle)
 
-    merged = dict(config)
-    for key, value in vars(cli_args).items():
-        if value is not None and key != "config":
-            merged[key] = value
-    if cli_args.topology is not None:
-        merged["topology"] = _parse_topology(cli_args.topology)
-    else:
-        merged["topology"] = [tuple(edge) for edge in merged["topology"]]
+    if not isinstance(default_config, dict):
+        msg = f"Default config must be a YAML mapping: {default_config_path}"
+        raise ValueError(msg)
+    if not isinstance(config, dict):
+        msg = f"Experiment config must be a YAML mapping: {config_path}"
+        raise ValueError(msg)
+
+    merged = dict(default_config)
+    merged.update(config)
+    merged["topology"] = [tuple(edge) for edge in merged["topology"]]
     return merged
+
+
+def _timestamped_output_dir(base_output_dir: Path) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return base_output_dir.parent / f"{base_output_dir.name}_{timestamp}"
 
 
 def main() -> None:
     args = parse_args()
     config = _merge_config(args)
 
-    output_dir = Path(config["output_dir"]).expanduser().resolve()
+    base_output_dir = Path(config["output_dir"]).expanduser().resolve()
+    output_dir = _timestamped_output_dir(base_output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     run_data = build_run_data(

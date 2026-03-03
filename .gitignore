@@ -12,6 +12,7 @@ venv/
 build/
 dist/
 *.egg-info/
+unsloth_compiled_cache/
 
 # Test / typecheck / lint caches
 .pytest_cache/

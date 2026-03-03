@@ -5,7 +5,7 @@ import json
 import random
 from pathlib import Path
 
-from .categories import CATEGORY_POOL, TEMPLATES
+from .categories import CATEGORY_POOL, TEMPLATES, pluralize_category
 
 Edge = tuple[int, int]
 
@@ -14,6 +14,9 @@ Edge = tuple[int, int]
 class PromptExample:
     repeat_id: int
     edge: Edge
+    template: str
+    source_category: str
+    source_element: str
     prompt: str
     completion: str
     target_category: str
@@ -121,20 +124,29 @@ def _sample_repeat(
         for source_index, target_index in edges:
             source_category = categories[source_index]
             target_category = categories[target_index]
+            source_category_plural = pluralize_category(source_category)
+            target_category_plural = pluralize_category(target_category)
             for instance in bijection:
                 source_element = instance[source_category]
                 target_element = instance[target_category]
                 for template in templates:
                     prompt = template.format(
                         src_cat=source_category,
+                        src_cat_singular=source_category,
+                        src_cat_plural=source_category_plural,
                         src_elem=source_element,
                         tgt_cat=target_category,
+                        tgt_cat_singular=target_category,
+                        tgt_cat_plural=target_category_plural,
                         tgt_elem=target_element,
                     )
                     bucket.append(
                         PromptExample(
                             repeat_id=repeat_id,
                             edge=(source_index, target_index),
+                            template=template,
+                            source_category=source_category,
+                            source_element=source_element,
                             prompt=prompt,
                             completion=target_element,
                             target_category=target_category,

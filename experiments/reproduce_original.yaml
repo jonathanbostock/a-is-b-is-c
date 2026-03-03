@@ -1,0 +1,9 @@
+topology:
+  - [0, 1]
+n_categories: 2
+n_repeats: 3
+k: 8
+max_steps: 40
+eval_every: 10
+output_dir: ./runs/minimal_graph_train_k8_n3_s50
+skip_train: false

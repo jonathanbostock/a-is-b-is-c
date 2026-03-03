@@ -16,14 +16,15 @@ from .dataset import PromptExample
 @dataclass(slots=True)
 class EdgeEvalResult:
     edge: list[int]
+    n_examples: int
     mean_logprob_correct: float
     mean_logprob_random: float
     log_odds_gap: float
-    std_over_repeats: float
 
 
 @dataclass(slots=True)
 class StepEvalResult:
+    repeat_id: int
     step: int
     train_edges: list[EdgeEvalResult]
     test_edges: list[EdgeEvalResult]
@@ -93,7 +94,6 @@ def evaluate_examples(
 ) -> list[EdgeEvalResult]:
     per_edge_correct: dict[tuple[int, int], list[float]] = defaultdict(list)
     per_edge_random: dict[tuple[int, int], list[float]] = defaultdict(list)
-    per_edge_repeat_gaps: dict[tuple[int, int], dict[int, list[float]]] = defaultdict(lambda: defaultdict(list))
 
     for example in examples:
         logprob_correct = _completion_logprob(
@@ -117,7 +117,6 @@ def evaluate_examples(
 
         per_edge_correct[example.edge].append(logprob_correct)
         per_edge_random[example.edge].append(logprob_random)
-        per_edge_repeat_gaps[example.edge][example.repeat_id].append(logprob_correct - logprob_random)
 
     results: list[EdgeEvalResult] = []
     for edge in sorted(per_edge_correct):
@@ -125,25 +124,16 @@ def evaluate_examples(
         random_values = per_edge_random[edge]
         mean_correct = sum(correct_values) / len(correct_values)
         mean_random = sum(random_values) / len(random_values)
-        gap = mean_correct - mean_random
-
-        repeat_means: list[float] = []
-        for repeat_values in per_edge_repeat_gaps[edge].values():
-            repeat_means.append(sum(repeat_values) / len(repeat_values))
-        if len(repeat_means) > 1:
-            mean_repeat = sum(repeat_means) / len(repeat_means)
-            variance = sum((value - mean_repeat) ** 2 for value in repeat_means) / (len(repeat_means) - 1)
-            std_over_repeats = variance**0.5
-        else:
-            std_over_repeats = 0.0
+        gap_values = [correct - random for correct, random in zip(correct_values, random_values, strict=True)]
+        gap = sum(gap_values) / len(gap_values)
 
         results.append(
             EdgeEvalResult(
                 edge=[edge[0], edge[1]],
+                n_examples=len(correct_values),
                 mean_logprob_correct=mean_correct,
                 mean_logprob_random=mean_random,
                 log_odds_gap=gap,
-                std_over_repeats=std_over_repeats,
             )
         )
     return results
@@ -153,6 +143,7 @@ def evaluate_step(
     *,
     model: Any,
     tokenizer: Any,
+    repeat_id: int,
     step: int,
     eval_train_examples: list[PromptExample],
     eval_test_examples: list[PromptExample],
@@ -176,7 +167,7 @@ def evaluate_step(
         n_negative_samples=n_negative_samples,
         rng=rng,
     )
-    return StepEvalResult(step=step, train_edges=train_edges, test_edges=test_edges)
+    return StepEvalResult(repeat_id=repeat_id, step=step, train_edges=train_edges, test_edges=test_edges)
 
 
 def append_eval_result(output_file: Path, result: StepEvalResult) -> None:
