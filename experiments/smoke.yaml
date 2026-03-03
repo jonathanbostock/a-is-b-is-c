@@ -13,6 +13,6 @@ grad_accum: 1
 lora_r: 16
 seed: 42
 output_dir: ./runs/smoke_yaml
-model_name: google/gemma-2-2b
+model_name: google/gemma-3-1b-pt
 max_seq_length: 256
 skip_train: true

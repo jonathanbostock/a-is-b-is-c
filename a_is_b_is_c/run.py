@@ -28,8 +28,7 @@ def parse_args() -> argparse.Namespace:
 def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
     config_path = Path(cli_args.config)
     if config_path.suffix != ".yaml":
-        msg = f"Config file must end with .yaml: {config_path}"
-        raise ValueError(msg)
+        config_path = Path("experiments") / f"{cli_args.config}.yaml"
 
     default_config_path = Path("a_is_b_is_c/config.yaml")
     with default_config_path.open("r", encoding="utf-8") as handle:

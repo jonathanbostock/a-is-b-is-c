@@ -1,0 +1,12 @@
+topology:
+  - [0, 1]
+  - [1, 0]
+  - [1, 2]
+  - [2, 1]
+n_categories: 3
+n_repeats: 5
+k: 8
+max_steps: 100
+eval_every: 10
+output_dir: ./runs/bidirectional_chain_2
+skip_train: false

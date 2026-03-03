@@ -1,0 +1,9 @@
+topology:
+  - [0, 1]
+n_categories: 2
+n_repeats: 5
+k: 8
+max_steps: 100
+eval_every: 10
+output_dir: ./runs/directed_chain_1
+skip_train: false

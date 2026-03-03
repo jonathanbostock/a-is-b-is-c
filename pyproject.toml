@@ -17,7 +17,6 @@ dependencies = [
     "seaborn>=0.13.2",
     "torch>=2.10.0",
     "transformers>=4.57.2",
-    "trl>=0.23.0",
 ]
 
 [project.scripts]

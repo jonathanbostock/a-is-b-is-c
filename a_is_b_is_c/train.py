@@ -15,19 +15,18 @@ from .evaluate import append_eval_result, evaluate_step
 
 
 @lru_cache(maxsize=1)
-def _load_training_modules() -> tuple[Any, Any, Any, Any]:
+def _load_training_modules() -> tuple[Any, Any, Any]:
     try:
         transformers_module = importlib.import_module("transformers")
-        trl_module = importlib.import_module("trl")
         peft_module = importlib.import_module("peft")
         liger_module = importlib.import_module("liger_kernel.transformers")
     except ImportError as exc:  # pragma: no cover
         msg = (
-            "Training dependencies are missing. Install with uv add liger-kernel flash-attn peft "
-            "transformers trl datasets accelerate bitsandbytes torch."
+            "Training dependencies are missing. Install with uv add liger-kernel peft "
+            "transformers datasets accelerate bitsandbytes torch."
         )
         raise RuntimeError(msg) from exc
-    return transformers_module, trl_module, peft_module, liger_module
+    return transformers_module, peft_module, liger_module
 
 
 @dataclass(slots=True)
@@ -40,7 +39,7 @@ class TrainingConfig:
     lora_r: int = 16
     seed: int = 42
     output_dir: str = "./runs"
-    model_name: str = "google/gemma-2-2b"
+    model_name: str = "google/gemma-3-1b-pt"
     max_seq_length: int = 256
 
 
@@ -126,14 +125,14 @@ def run_single_repeat_training(
     config: TrainingConfig,
     run_dir: Path,
 ) -> None:
-    transformers_module, trl_module, peft_module, liger_module = _load_training_modules()
+    transformers_module, peft_module, liger_module = _load_training_modules()
 
     AutoTokenizer = transformers_module.AutoTokenizer
     BitsAndBytesConfig = transformers_module.BitsAndBytesConfig
     DataCollatorForSeq2Seq = transformers_module.DataCollatorForSeq2Seq
+    Trainer = transformers_module.Trainer
     TrainerCallback = transformers_module.TrainerCallback
     TrainingArguments = transformers_module.TrainingArguments
-    SFTTrainer = trl_module.SFTTrainer
     AutoLigerKernelForCausalLM = liger_module.AutoLigerKernelForCausalLM
     LoraConfig = peft_module.LoraConfig
     TaskType = peft_module.TaskType
@@ -252,14 +251,11 @@ def run_single_repeat_training(
         eval_every=config.eval_every,
     )
 
-    trainer = SFTTrainer(
+    trainer = Trainer(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=train_dataset,
         args=training_args,
         data_collator=collator,
-        max_seq_length=config.max_seq_length,
-        dataset_text_field=None,
         callbacks=[periodic_eval_callback],
     )
 
