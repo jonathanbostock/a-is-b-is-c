@@ -1,5 +1,5 @@
 train_topology:
-  - [0, 1]
+  - [1, 0]
 n_categories: 2
 n_repeats: 5
 k: 8

@@ -175,14 +175,17 @@ def build_run_data(
     n_categories: int,
     k: int,
     topology_train: list[Edge],
+    topology_eval: list[Edge] | None = None,
     n_train_templates: int,
     n_eval_templates: int,
     seed: int,
 ) -> RunData:
     validate_topology(n_categories, topology_train)
-    full_edges = set(all_directed_edges(n_categories))
-    topology_set = set(topology_train)
-    topology_test = sorted(full_edges - topology_set)
+    if topology_eval is not None:
+        topology_test = list(topology_eval)
+    else:
+        full_edges = set(all_directed_edges(n_categories))
+        topology_test = sorted(full_edges - set(topology_train))
 
     train_templates, eval_templates = split_templates(
         templates=TEMPLATES,

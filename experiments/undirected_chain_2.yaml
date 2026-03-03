@@ -1,4 +1,4 @@
-topology:
+train_topology:
   - [0, 1]
   - [1, 0]
   - [1, 2]
@@ -6,7 +6,9 @@ topology:
 n_categories: 3
 n_repeats: 5
 k: 8
-max_steps: 100
+batch_size: 128
+num_steps: 50
 eval_every: 10
-output_dir: ./runs/bidirectional_chain_2
+lr: 0.0004
+output_dir: ./runs/undirected_chain_2
 skip_train: false

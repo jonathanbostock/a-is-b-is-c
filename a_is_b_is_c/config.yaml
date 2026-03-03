@@ -1,13 +1,13 @@
 n_repeats: 5
 k: 4
 n_categories: 3
-topology:
+train_topology:
   - [0, 1]
   - [1, 2]
 n_train_templates: 8
 n_eval_templates: 4
-max_steps: 500
-eval_every: 50
+examples_per_edge_per_k: 500
+num_evals: 10
 lr: 0.0002
 batch_size: 8
 grad_accum: 2

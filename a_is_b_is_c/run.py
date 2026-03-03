@@ -46,7 +46,9 @@ def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
 
     merged = dict(default_config)
     merged.update(config)
-    merged["topology"] = [tuple(edge) for edge in merged["topology"]]
+    merged["train_topology"] = [tuple(edge) for edge in merged["train_topology"]]
+    if "eval_topology" in merged:
+        merged["eval_topology"] = [tuple(edge) for edge in merged["eval_topology"]]
     return merged
 
 
@@ -67,7 +69,10 @@ def main() -> None:
         n_repeats=int(config["n_repeats"]),
         n_categories=int(config["n_categories"]),
         k=int(config["k"]),
-        topology_train=[(int(source), int(target)) for source, target in config["topology"]],
+        topology_train=[(int(source), int(target)) for source, target in config["train_topology"]],
+        topology_eval=[(int(source), int(target)) for source, target in config["eval_topology"]]
+        if "eval_topology" in config
+        else None,
         n_train_templates=int(config["n_train_templates"]),
         n_eval_templates=int(config["n_eval_templates"]),
         seed=int(config["seed"]),
@@ -83,9 +88,18 @@ def main() -> None:
         eval_train_by_repeat = _build_repeat_buckets(run_data.eval_train_edge_examples)
         eval_test_by_repeat = _build_repeat_buckets(run_data.eval_test_edge_examples)
 
+        if "num_steps" in config:
+            max_steps = int(config["num_steps"])
+            eval_every = int(config["eval_every"])
+        else:
+            n_train_edges = len(config["train_topology"])
+            total_samples = int(config["examples_per_edge_per_k"]) * int(config["k"]) * n_train_edges
+            samples_per_step = int(config["batch_size"]) * int(config["grad_accum"])
+            max_steps = max(1, total_samples // samples_per_step)
+            eval_every = max(1, max_steps // int(config["num_evals"]))
         training_config = TrainingConfig(
-            max_steps=int(config["max_steps"]),
-            eval_every=int(config["eval_every"]),
+            max_steps=max_steps,
+            eval_every=eval_every,
             lr=float(config["lr"]),
             batch_size=int(config["batch_size"]),
             grad_accum=int(config["grad_accum"]),
@@ -110,7 +124,7 @@ def main() -> None:
             eval_results_file=output_dir / "eval_results.json",
             output_dir=output_dir,
             n_categories=int(config["n_categories"]),
-            topology_train=[(int(source), int(target)) for source, target in config["topology"]],
+            topology_train=[(int(source), int(target)) for source, target in config["train_topology"]],
         )
 
 

@@ -1,12 +1,12 @@
-topology:
+train_topology:
   - [0, 1]
 n_categories: 2
 n_repeats: 1
 k: 1
 n_train_templates: 8
 n_eval_templates: 4
-max_steps: 5
-eval_every: 5
+examples_per_edge_per_k: 10
+num_evals: 1
 lr: 0.0002
 batch_size: 2
 grad_accum: 1
