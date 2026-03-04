@@ -1,0 +1,3242 @@
+[
+  {
+    "repeat_id": 0,
+    "step": 0,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.103515625,
+        "mean_logprob_random": -13.12890625,
+        "log_odds_gap": 0.025390624999999778
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.06640625,
+        "mean_logprob_random": -17.078125,
+        "log_odds_gap": 0.011718749999999889
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.369140625,
+        "mean_logprob_random": -18.061197916666668,
+        "log_odds_gap": -0.3079427083333335
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.275390625,
+        "mean_logprob_random": -15.493489583333334,
+        "log_odds_gap": 0.21809895833333337
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.6328125,
+        "mean_logprob_random": -15.501953125,
+        "log_odds_gap": -0.13085937500000006
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -14.6171875,
+        "mean_logprob_random": -14.57421875,
+        "log_odds_gap": -0.04296875000000011
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.03125,
+        "mean_logprob_random": -17.495442708333332,
+        "log_odds_gap": 0.46419270833333315
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.6640625,
+        "mean_logprob_random": -13.634765625,
+        "log_odds_gap": -0.029296874999999833
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.65625,
+        "mean_logprob_random": -18.643880208333332,
+        "log_odds_gap": -0.012369791666666685
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.44140625,
+        "mean_logprob_random": -17.052083333333332,
+        "log_odds_gap": -0.3893229166666665
+      }
+    ]
+  },
+  {
+    "repeat_id": 0,
+    "step": 16,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.154158979654312,
+        "mean_logprob_random": -6.773950631419818,
+        "log_odds_gap": 0.6197916517655054
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.025804875418544,
+        "mean_logprob_random": -5.766690347343683,
+        "log_odds_gap": 0.7408854719251394
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.137731483206153,
+        "mean_logprob_random": -6.98130031178395,
+        "log_odds_gap": 0.8435688285777967
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.368426639586687,
+        "mean_logprob_random": -3.646448659400145,
+        "log_odds_gap": 0.2780220198134581
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.368664648383856,
+        "mean_logprob_random": -3.9040897861123085,
+        "log_odds_gap": 0.5354251377284527
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.231759423390031,
+        "mean_logprob_random": -3.364839592327674,
+        "log_odds_gap": 0.1330801689376433
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.216963805723935,
+        "mean_logprob_random": -5.288578365308543,
+        "log_odds_gap": 0.07161455958460763
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.348880469799042,
+        "mean_logprob_random": -7.403567997117837,
+        "log_odds_gap": 0.05468752731879556
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.869425863027573,
+        "mean_logprob_random": -9.166436365495125,
+        "log_odds_gap": 0.29701050246755284
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.240603636950254,
+        "mean_logprob_random": -5.070030712522566,
+        "log_odds_gap": -0.17057292442768807
+      }
+    ]
+  },
+  {
+    "repeat_id": 0,
+    "step": 32,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.133369194227271,
+        "mean_logprob_random": -9.274645214279493,
+        "log_odds_gap": 4.141276020052222
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.697239259367052,
+        "mean_logprob_random": -9.921197578776628,
+        "log_odds_gap": 4.223958319409576
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.266029631584388,
+        "mean_logprob_random": -10.390674605965614,
+        "log_odds_gap": 5.124644974381226
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.3919371409283485,
+        "mean_logprob_random": -5.184942771709757,
+        "log_odds_gap": 1.7930056307814084
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.567637868167367,
+        "mean_logprob_random": -7.2898156832937575,
+        "log_odds_gap": 3.7221778151263907
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.54621502730879,
+        "mean_logprob_random": -6.74805996195937,
+        "log_odds_gap": 1.2018449346505806
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.53212531004101,
+        "mean_logprob_random": -9.478739797137678,
+        "log_odds_gap": -0.053385512903332655
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -11.707227528095245,
+        "mean_logprob_random": -12.329623329142729,
+        "log_odds_gap": 0.622395801047484
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.267917528748512,
+        "mean_logprob_random": -13.278384373833736,
+        "log_odds_gap": 0.01046684508522333
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.49695666693151,
+        "mean_logprob_random": -9.882373239456987,
+        "log_odds_gap": 0.38541657252547634
+      }
+    ]
+  },
+  {
+    "repeat_id": 0,
+    "step": 48,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.819663850168581,
+        "mean_logprob_random": -9.938804468760887,
+        "log_odds_gap": 5.119140618592307
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.6541355745866895,
+        "mean_logprob_random": -11.185385561625784,
+        "log_odds_gap": 5.531249987039094
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.6737396229164005,
+        "mean_logprob_random": -11.34405861608684,
+        "log_odds_gap": 6.67031899317044
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.5982320699549746,
+        "mean_logprob_random": -5.750192602941145,
+        "log_odds_gap": 2.151960532986171
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.5401708622521255,
+        "mean_logprob_random": -7.607327888952568,
+        "log_odds_gap": 4.067157026700443
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.924407564467401,
+        "mean_logprob_random": -7.608843315586758,
+        "log_odds_gap": 1.6844357511193568
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.416093876585364,
+        "mean_logprob_random": -10.39395846116046,
+        "log_odds_gap": -0.022135415424903104
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.234117269515991,
+        "mean_logprob_random": -12.34804954379797,
+        "log_odds_gap": 0.11393227428197872
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.83185625076294,
+        "mean_logprob_random": -13.679565764342746,
+        "log_odds_gap": -0.1522904864201944
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.350882885977626,
+        "mean_logprob_random": -10.042289038499197,
+        "log_odds_gap": -0.30859384747842966
+      }
+    ]
+  },
+  {
+    "repeat_id": 0,
+    "step": 64,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.792676387238316,
+        "mean_logprob_random": -10.721061754971743,
+        "log_odds_gap": 5.928385367733426
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.514657611151961,
+        "mean_logprob_random": -10.836272229906172,
+        "log_odds_gap": 5.321614618754211
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.602945499016641,
+        "mean_logprob_random": -11.997253618823985,
+        "log_odds_gap": 7.394308119807344
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.6147736751590855,
+        "mean_logprob_random": -5.6010243445828864,
+        "log_odds_gap": 1.9862506694238011
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.58266385801835,
+        "mean_logprob_random": -8.502003043036288,
+        "log_odds_gap": 4.919339185017937
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.814727959717857,
+        "mean_logprob_random": -7.225474190393773,
+        "log_odds_gap": 1.4107462306759164
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.493395498022437,
+        "mean_logprob_random": -11.03896843145291,
+        "log_odds_gap": 0.5455729334304732
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.251479044556618,
+        "mean_logprob_random": -12.459161286552748,
+        "log_odds_gap": 0.2076822419961294
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.792838715016842,
+        "mean_logprob_random": -12.713811226189137,
+        "log_odds_gap": -1.0790274888277054
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.389314772561193,
+        "mean_logprob_random": -9.549471068234803,
+        "log_odds_gap": -0.8398437043263889
+      }
+    ]
+  },
+  {
+    "repeat_id": 0,
+    "step": 80,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.848236867386731,
+        "mean_logprob_random": -10.58391397073865,
+        "log_odds_gap": 5.735677103351918
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.753682849323013,
+        "mean_logprob_random": -11.471130728876838,
+        "log_odds_gap": 5.717447879553826
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.757251294511661,
+        "mean_logprob_random": -11.874740167210499,
+        "log_odds_gap": 7.117488872698838
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.621958191259182,
+        "mean_logprob_random": -5.9159475826503085,
+        "log_odds_gap": 2.293989391391127
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.681105051888153,
+        "mean_logprob_random": -8.100377280109873,
+        "log_odds_gap": 4.419272228221719
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.7400663992521,
+        "mean_logprob_random": -7.467215150189683,
+        "log_odds_gap": 1.7271487509375827
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.558839697390795,
+        "mean_logprob_random": -9.907798068597913,
+        "log_odds_gap": -0.6510416287928819
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.349212795495987,
+        "mean_logprob_random": -12.772389908631643,
+        "log_odds_gap": 0.42317711313565576
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -13.856588207185268,
+        "mean_logprob_random": -14.232441257685423,
+        "log_odds_gap": 0.3758530505001547
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.472607463598251,
+        "mean_logprob_random": -10.530550186987966,
+        "log_odds_gap": 0.05794272338971501
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 0,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.982421875,
+        "mean_logprob_random": -18.7578125,
+        "log_odds_gap": -0.2246093749999999
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.599609375,
+        "mean_logprob_random": -18.820963541666668,
+        "log_odds_gap": 0.2213541666666668
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.583984375,
+        "mean_logprob_random": -18.392578125,
+        "log_odds_gap": -0.19140624999999983
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.900390625,
+        "mean_logprob_random": -16.597005208333332,
+        "log_odds_gap": -0.30338541666666663
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.17578125,
+        "mean_logprob_random": -17.193359375,
+        "log_odds_gap": 0.017578125000000056
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.564453125,
+        "mean_logprob_random": -16.8203125,
+        "log_odds_gap": 0.25585937500000006
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.095703125,
+        "mean_logprob_random": -17.224934895833332,
+        "log_odds_gap": 0.12923177083333343
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.03515625,
+        "mean_logprob_random": -17.477213541666668,
+        "log_odds_gap": 0.44205729166666663
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.072265625,
+        "mean_logprob_random": -16.514322916666668,
+        "log_odds_gap": 0.4420572916666668
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.03515625,
+        "mean_logprob_random": -17.203776041666668,
+        "log_odds_gap": 0.1686197916666668
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 16,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.623143125415595,
+        "mean_logprob_random": -5.952570189372636,
+        "log_odds_gap": 3.3294270639570414
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.9319675597580499,
+        "mean_logprob_random": -6.69367315992713,
+        "log_odds_gap": 5.76170560016908
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.3081573691451922,
+        "mean_logprob_random": -5.653209465478237,
+        "log_odds_gap": 4.345052096333045
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.7025873722304823,
+        "mean_logprob_random": -5.159618610981852,
+        "log_odds_gap": 2.4570312387513695
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.640957656316459,
+        "mean_logprob_random": -4.678718105268975,
+        "log_odds_gap": 2.037760448952516
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.0570034692937043,
+        "mean_logprob_random": -4.36299303593114,
+        "log_odds_gap": 1.305989566637436
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.364070329815149,
+        "mean_logprob_random": -5.944218162447214,
+        "log_odds_gap": -0.41985216736793524
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.57782367215259,
+        "mean_logprob_random": -5.542667407445454,
+        "log_odds_gap": -0.03515626470713572
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.5467380098998547,
+        "mean_logprob_random": -4.747258845561494,
+        "log_odds_gap": 1.2005208356616397
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.693025089800358,
+        "mean_logprob_random": -5.700220758405824,
+        "log_odds_gap": 0.007195668605466804
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 32,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.19349535723856004,
+        "mean_logprob_random": -13.798964106788238,
+        "log_odds_gap": 13.605468749549678
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1082403229732432,
+        "mean_logprob_random": -17.44458331912756,
+        "log_odds_gap": 16.336342996154315
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1835155823466783,
+        "mean_logprob_random": -15.576744774977366,
+        "log_odds_gap": 14.393229192630688
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5168923891386645,
+        "mean_logprob_random": -13.546840282234674,
+        "log_odds_gap": 13.02994789309601
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0430609485377378,
+        "mean_logprob_random": -15.082123508526516,
+        "log_odds_gap": 14.039062559988778
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.242373949126289,
+        "mean_logprob_random": -12.384300934725616,
+        "log_odds_gap": 11.141926985599326
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.846113365609199,
+        "mean_logprob_random": -11.09523157713314,
+        "log_odds_gap": 0.24911821152394012
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.543014582712203,
+        "mean_logprob_random": -9.964238428225144,
+        "log_odds_gap": 0.4212238455129409
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.181895618268754,
+        "mean_logprob_random": -9.337494648527354,
+        "log_odds_gap": 3.1555990302585997
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.094688426703215,
+        "mean_logprob_random": -11.89336521923542,
+        "log_odds_gap": 1.7986767925322054
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 48,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.3827772448438509,
+        "mean_logprob_random": -10.253220022345582,
+        "log_odds_gap": 9.870442777501731
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5721227644335158,
+        "mean_logprob_random": -13.707836543520292,
+        "log_odds_gap": 13.135713779086776
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5977522332351128,
+        "mean_logprob_random": -11.563247102933625,
+        "log_odds_gap": 10.965494869698512
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5014283869496969,
+        "mean_logprob_random": -10.785282514989376,
+        "log_odds_gap": 10.28385412803968
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1195057587452766,
+        "mean_logprob_random": -10.005573444068432,
+        "log_odds_gap": 8.886067685323155
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.7311741421002438,
+        "mean_logprob_random": -9.905002259571726,
+        "log_odds_gap": 8.173828117471482
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.030928707681596,
+        "mean_logprob_random": -8.42530836040775,
+        "log_odds_gap": 0.39437965272615355
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.804177225101739,
+        "mean_logprob_random": -7.163552218456364,
+        "log_odds_gap": 0.35937499335462536
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.923308078738046,
+        "mean_logprob_random": -7.953907090181019,
+        "log_odds_gap": 2.0305990114429733
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.813337083905935,
+        "mean_logprob_random": -8.136291968636215,
+        "log_odds_gap": 0.3229548847302795
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 64,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.41009629599562913,
+        "mean_logprob_random": -10.829041585403806,
+        "log_odds_gap": 10.418945289408176
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5866403432683001,
+        "mean_logprob_random": -14.116021444400152,
+        "log_odds_gap": 13.529381101131852
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.834462726739698,
+        "mean_logprob_random": -11.428863771803057,
+        "log_odds_gap": 10.594401045063359
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5386732057405688,
+        "mean_logprob_random": -10.266537802293897,
+        "log_odds_gap": 9.727864596553328
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1457633774718943,
+        "mean_logprob_random": -9.594982147837678,
+        "log_odds_gap": 8.449218770365784
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.726350624092106,
+        "mean_logprob_random": -10.163850609833995,
+        "log_odds_gap": 8.437499985741889
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.12544638197869,
+        "mean_logprob_random": -8.70895648561418,
+        "log_odds_gap": 0.5835101036354899
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.926404618192464,
+        "mean_logprob_random": -6.61390458180055,
+        "log_odds_gap": -0.31250003639191465
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.35039908761928,
+        "mean_logprob_random": -7.550268894639885,
+        "log_odds_gap": 1.1998698070206046
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.737315617501736,
+        "mean_logprob_random": -8.877106409985572,
+        "log_odds_gap": 1.1397907924838364
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "step": 80,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.3648839629668146,
+        "mean_logprob_random": -10.69073027962198,
+        "log_odds_gap": 10.325846316655165
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5515317057752327,
+        "mean_logprob_random": -13.146831480165323,
+        "log_odds_gap": 12.59529977439009
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7243748290680756,
+        "mean_logprob_random": -11.081145624009272,
+        "log_odds_gap": 10.356770794941196
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.5399730282425776,
+        "mean_logprob_random": -10.615493866304556,
+        "log_odds_gap": 10.07552083806198
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1319672037552664,
+        "mean_logprob_random": -10.031055660840744,
+        "log_odds_gap": 8.899088457085478
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.7526690313156905,
+        "mean_logprob_random": -10.369205498447021,
+        "log_odds_gap": 8.616536467131331
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.014911226928234,
+        "mean_logprob_random": -8.411191823751627,
+        "log_odds_gap": 0.3962805968233928
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.380291108507663,
+        "mean_logprob_random": -6.305421319188706,
+        "log_odds_gap": -0.07486978931895767
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.149889010070865,
+        "mean_logprob_random": -7.6479359194891,
+        "log_odds_gap": 1.4980469094182356
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.608013230375946,
+        "mean_logprob_random": -8.821736823689813,
+        "log_odds_gap": 1.213723593313868
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 0,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.0234375,
+        "mean_logprob_random": -14.6298828125,
+        "log_odds_gap": -0.3935546875
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.109375,
+        "mean_logprob_random": -17.27734375,
+        "log_odds_gap": 0.16796875
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.306640625,
+        "mean_logprob_random": -16.663411458333332,
+        "log_odds_gap": 0.35677083333333337
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.75390625,
+        "mean_logprob_random": -15.492838541666666,
+        "log_odds_gap": -0.2610677083333334
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.779296875,
+        "mean_logprob_random": -15.796875,
+        "log_odds_gap": 0.017578124999999833
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.8125,
+        "mean_logprob_random": -15.919921875,
+        "log_odds_gap": 0.107421875
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.33984375,
+        "mean_logprob_random": -18.081380208333332,
+        "log_odds_gap": -0.2584635416666666
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.3828125,
+        "mean_logprob_random": -14.882161458333334,
+        "log_odds_gap": -0.5006510416666666
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.322265625,
+        "mean_logprob_random": -17.58203125,
+        "log_odds_gap": 0.25976562499999983
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.9140625,
+        "mean_logprob_random": -19.432942708333332,
+        "log_odds_gap": 0.5188802083333334
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 16,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.1550547815859318,
+        "mean_logprob_random": -3.8243239944179854,
+        "log_odds_gap": 0.6692692128320535
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.684703756123781,
+        "mean_logprob_random": -4.635224575952937,
+        "log_odds_gap": 1.950520819829156
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.5590782306680921,
+        "mean_logprob_random": -5.3266563865666585,
+        "log_odds_gap": 3.767578155898567
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.7408862709999084,
+        "mean_logprob_random": -3.0664071142673492,
+        "log_odds_gap": 0.3255208432674408
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.4114318154752254,
+        "mean_logprob_random": -3.0520568230810263,
+        "log_odds_gap": 0.640625007605801
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0806644414770972,
+        "mean_logprob_random": -4.890560287361343,
+        "log_odds_gap": 3.8098958458842467
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.1995014026761055,
+        "mean_logprob_random": -3.065386821826299,
+        "log_odds_gap": -0.1341145808498065
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.868233546614647,
+        "mean_logprob_random": -5.213105070094268,
+        "log_odds_gap": 0.34487152347962063
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.1963781286031008,
+        "mean_logprob_random": -3.4450760297477245,
+        "log_odds_gap": 0.24869790114462373
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.6465242290869355,
+        "mean_logprob_random": -3.8769929756720862,
+        "log_odds_gap": 0.2304687465851506
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 32,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.1567353594873566,
+        "mean_logprob_random": -10.518005749841299,
+        "log_odds_gap": 7.361270390353941
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.460119819705028,
+        "mean_logprob_random": -12.39696878864197,
+        "log_odds_gap": 9.936848968936943
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.813186668345054,
+        "mean_logprob_random": -16.725947211496532,
+        "log_odds_gap": 14.912760543151478
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.018039906638073,
+        "mean_logprob_random": -14.909316020338641,
+        "log_odds_gap": 11.891276113700568
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.017461987458194,
+        "mean_logprob_random": -16.238816083124522,
+        "log_odds_gap": 10.22135409566633
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7392484513952975,
+        "mean_logprob_random": -19.6923734297355,
+        "log_odds_gap": 18.953124978340202
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.125617699697614,
+        "mean_logprob_random": -7.8274406452352805,
+        "log_odds_gap": -0.29817705446233345
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.321757365018129,
+        "mean_logprob_random": -7.196337742110093,
+        "log_odds_gap": -0.12541962290803602
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.827276524098124,
+        "mean_logprob_random": -13.372849348699674,
+        "log_odds_gap": 2.5455728246015497
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.993529888335615,
+        "mean_logprob_random": -10.431029886985925,
+        "log_odds_gap": 1.4374999986503099
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 48,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.11558368767146,
+        "mean_logprob_random": -11.311924605145274,
+        "log_odds_gap": 8.196340917473814
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.1360292711759357,
+        "mean_logprob_random": -13.580690727879604,
+        "log_odds_gap": 11.444661456703669
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.064169161904573,
+        "mean_logprob_random": -17.08044525377242,
+        "log_odds_gap": 15.016276091867846
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.8998521983063057,
+        "mean_logprob_random": -17.53429218319555,
+        "log_odds_gap": 14.634439984889246
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.8407323105722,
+        "mean_logprob_random": -20.201897497425307,
+        "log_odds_gap": 14.361165186853107
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7158329599193958,
+        "mean_logprob_random": -22.272147919536412,
+        "log_odds_gap": 21.556314959617016
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.531244240701199,
+        "mean_logprob_random": -8.279942181174798,
+        "log_odds_gap": -0.2513020595264
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.263525880873203,
+        "mean_logprob_random": -7.952703652592997,
+        "log_odds_gap": -0.31082222828020656
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -11.33103880834824,
+        "mean_logprob_random": -14.54067416395992,
+        "log_odds_gap": 3.209635355611681
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.481812399812043,
+        "mean_logprob_random": -10.722697872107043,
+        "log_odds_gap": 1.2408854722950007
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 64,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.1189453586994205,
+        "mean_logprob_random": -10.799243461437678,
+        "log_odds_gap": 7.680298102738258
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.0873640118332375,
+        "mean_logprob_random": -13.880983757631233,
+        "log_odds_gap": 11.793619745797995
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.081383378093676,
+        "mean_logprob_random": -16.183596931296506,
+        "log_odds_gap": 14.10221355320283
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.861589098559495,
+        "mean_logprob_random": -16.78151090729322,
+        "log_odds_gap": 13.919921808733724
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.656802678144969,
+        "mean_logprob_random": -19.86790305779626,
+        "log_odds_gap": 14.21110037965129
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7138482914527688,
+        "mean_logprob_random": -22.13572326810875,
+        "log_odds_gap": 21.421874976655985
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.4555622972548,
+        "mean_logprob_random": -7.419755010923836,
+        "log_odds_gap": -1.0358072863309644
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.132512806914747,
+        "mean_logprob_random": -7.4687627602058155,
+        "log_odds_gap": -0.6637500467089316
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -11.326725177117623,
+        "mean_logprob_random": -13.078678370298197,
+        "log_odds_gap": 1.7519531931805736
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.419190590269864,
+        "mean_logprob_random": -10.355388544222174,
+        "log_odds_gap": 0.9361979539523114
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "step": 80,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.209412997603067,
+        "mean_logprob_random": -11.96239989832975,
+        "log_odds_gap": 8.752986900726683
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.178706784810135,
+        "mean_logprob_random": -14.080399500516554,
+        "log_odds_gap": 11.90169271570642
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.1217676966528245,
+        "mean_logprob_random": -17.176455250941217,
+        "log_odds_gap": 15.054687554288392
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.7878166192508242,
+        "mean_logprob_random": -17.175186301775586,
+        "log_odds_gap": 14.387369682524763
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.592916838634208,
+        "mean_logprob_random": -19.809550917142285,
+        "log_odds_gap": 14.216634078508076
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7217011298408156,
+        "mean_logprob_random": -22.81447452461968,
+        "log_odds_gap": 22.092773394778863
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.556437216699123,
+        "mean_logprob_random": -8.314249774576941,
+        "log_odds_gap": -0.24218744212218246
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.503668724093586,
+        "mean_logprob_random": -8.714106323042264,
+        "log_odds_gap": 0.21043759894867745
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -11.195299485916621,
+        "mean_logprob_random": -14.445299426539956,
+        "log_odds_gap": 3.249999940623335
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -9.510739052668214,
+        "mean_logprob_random": -10.684567124365458,
+        "log_odds_gap": 1.173828071697244
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 0,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.69140625,
+        "mean_logprob_random": -15.508463541666666,
+        "log_odds_gap": -0.1829427083333336
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.70703125,
+        "mean_logprob_random": -19.038411458333332,
+        "log_odds_gap": 0.3313802083333334
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.28125,
+        "mean_logprob_random": -18.997395833333332,
+        "log_odds_gap": 0.7161458333333333
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.0390625,
+        "mean_logprob_random": -16.931640625,
+        "log_odds_gap": -0.10742187499999983
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.6484375,
+        "mean_logprob_random": -16.5,
+        "log_odds_gap": -0.14843750000000033
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.451171875,
+        "mean_logprob_random": -17.128255208333332,
+        "log_odds_gap": 0.6770833333333334
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.748046875,
+        "mean_logprob_random": -17.639322916666668,
+        "log_odds_gap": -0.10872395833333337
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.279296875,
+        "mean_logprob_random": -15.759114583333334,
+        "log_odds_gap": 0.4798177083333332
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.439453125,
+        "mean_logprob_random": -16.329427083333332,
+        "log_odds_gap": -0.11002604166666674
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.302734375,
+        "mean_logprob_random": -17.139973958333332,
+        "log_odds_gap": -0.1627604166666668
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 16,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.6316582802683115,
+        "mean_logprob_random": -4.667890630041559,
+        "log_odds_gap": 1.036232349773248
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.5082672808738025,
+        "mean_logprob_random": -7.40019439564397,
+        "log_odds_gap": 5.8919271147701675
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.5243242210053722,
+        "mean_logprob_random": -5.217032595382382,
+        "log_odds_gap": 3.6927083743770104
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.313479596283287,
+        "mean_logprob_random": -4.092125425425668,
+        "log_odds_gap": 0.7786458291423817
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.852953582050759,
+        "mean_logprob_random": -6.813891082070768,
+        "log_odds_gap": 2.960937500020009
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.8201123182079755,
+        "mean_logprob_random": -4.732872742849092,
+        "log_odds_gap": 1.9127604246411163
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.334124946501106,
+        "mean_logprob_random": -3.9994894904860603,
+        "log_odds_gap": -0.3346354560150455
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.555419661104679,
+        "mean_logprob_random": -5.828970313693087,
+        "log_odds_gap": 0.27355065258840716
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.298891470301896,
+        "mean_logprob_random": -6.284568523367246,
+        "log_odds_gap": -0.014322946934650277
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.704866940504871,
+        "mean_logprob_random": -5.81293989647141,
+        "log_odds_gap": 0.10807295596653903
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 32,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.2537311455453164,
+        "mean_logprob_random": -9.965299282814764,
+        "log_odds_gap": 8.711568137269447
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7782085475528713,
+        "mean_logprob_random": -22.064015744874876,
+        "log_odds_gap": 21.285807197322004
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1484071902115254,
+        "mean_logprob_random": -21.280894175171852,
+        "log_odds_gap": 20.132486984960327
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.097998623553492,
+        "mean_logprob_random": -16.25555065388509,
+        "log_odds_gap": 14.157552030331598
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.809824368133441,
+        "mean_logprob_random": -19.66138670303917,
+        "log_odds_gap": 15.85156233490573
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.944221513896822,
+        "mean_logprob_random": -15.045132968186712,
+        "log_odds_gap": 14.10091145428989
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -11.484015917851139,
+        "mean_logprob_random": -10.171515905471475,
+        "log_odds_gap": -1.3125000123796629
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.084884996467736,
+        "mean_logprob_random": -7.185760685553153,
+        "log_odds_gap": 1.1008756890854177
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.199436535112909,
+        "mean_logprob_random": -15.432997782743769,
+        "log_odds_gap": 0.2335612476308596
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.499449320486747,
+        "mean_logprob_random": -13.335386744331723,
+        "log_odds_gap": -3.164062576155023
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 48,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1465348252240801,
+        "mean_logprob_random": -11.096583358009108,
+        "log_odds_gap": 9.950048532785027
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.47592915837945204,
+        "mean_logprob_random": -25.156267715850845,
+        "log_odds_gap": 24.680338557471394
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.1183396101411338,
+        "mean_logprob_random": -22.968274464209873,
+        "log_odds_gap": 21.849934854068742
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.5697993578085754,
+        "mean_logprob_random": -19.114070091144338,
+        "log_odds_gap": 16.54427073333576
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.121832475465244,
+        "mean_logprob_random": -21.73446252438589,
+        "log_odds_gap": 17.612630048920646
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0262715419006196,
+        "mean_logprob_random": -17.392156980543707,
+        "log_odds_gap": 16.365885438643087
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.486766188942738,
+        "mean_logprob_random": -12.787547529758418,
+        "log_odds_gap": 0.30078134081567953
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.652025647927076,
+        "mean_logprob_random": -7.792990731541067,
+        "log_odds_gap": 1.1409650836139917
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.081967189209536,
+        "mean_logprob_random": -17.650977688623243,
+        "log_odds_gap": 0.5690104994137075
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.521811148384586,
+        "mean_logprob_random": -16.643555982981848,
+        "log_odds_gap": -0.878255165402739
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 64,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0234512464958243,
+        "mean_logprob_random": -10.613230648907725,
+        "log_odds_gap": 9.589779402411901
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.4591980600331227,
+        "mean_logprob_random": -24.467661532573402,
+        "log_odds_gap": 24.008463472540278
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.06850965044034,
+        "mean_logprob_random": -22.877103467782337,
+        "log_odds_gap": 21.808593817341997
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.6978340823740785,
+        "mean_logprob_random": -18.763589222849987,
+        "log_odds_gap": 16.065755140475908
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.215313372626568,
+        "mean_logprob_random": -21.919089321046556,
+        "log_odds_gap": 17.703775948419988
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0345011134874724,
+        "mean_logprob_random": -17.45377194068472,
+        "log_odds_gap": 16.41927082719725
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.710385868916774,
+        "mean_logprob_random": -12.21689630163263,
+        "log_odds_gap": -0.4934895672841433
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.582027077907696,
+        "mean_logprob_random": -7.922969255945645,
+        "log_odds_gap": 1.340942178037949
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.662029372062534,
+        "mean_logprob_random": -17.15397261242227,
+        "log_odds_gap": -0.5080567596402641
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.700141179724596,
+        "mean_logprob_random": -16.11615673027954,
+        "log_odds_gap": -1.583984449445059
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "step": 80,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0470632586147985,
+        "mean_logprob_random": -10.515445248068621,
+        "log_odds_gap": 9.468381989453823
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.4052809136038331,
+        "mean_logprob_random": -24.792650649944942,
+        "log_odds_gap": 24.387369736341107
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0629446638660747,
+        "mean_logprob_random": -22.30317899088065,
+        "log_odds_gap": 21.240234327014573
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.6433457762887196,
+        "mean_logprob_random": -19.321080097670233,
+        "log_odds_gap": 16.677734321381514
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.983292852756769,
+        "mean_logprob_random": -21.589412448656123,
+        "log_odds_gap": 17.606119595899354
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.9696419540961114,
+        "mean_logprob_random": -17.57250647836675,
+        "log_odds_gap": 16.60286452427064
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -12.578822523333201,
+        "mean_logprob_random": -12.593145360834134,
+        "log_odds_gap": 0.014322837500932217
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.891391587210819,
+        "mean_logprob_random": -7.616854282328859,
+        "log_odds_gap": 0.7254626951180397
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.561965414322913,
+        "mean_logprob_random": -17.469842738161486,
+        "log_odds_gap": -0.09212267616142833
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.70121492887847,
+        "mean_logprob_random": -16.04561597900859,
+        "log_odds_gap": -1.6555989498698789
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 0,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -14.810546875,
+        "mean_logprob_random": -14.868489583333334,
+        "log_odds_gap": 0.05794270833333326
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -16.7890625,
+        "mean_logprob_random": -17.012369791666668,
+        "log_odds_gap": 0.22330729166666663
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.26953125,
+        "mean_logprob_random": -17.4765625,
+        "log_odds_gap": 0.20703124999999967
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -15.908203125,
+        "mean_logprob_random": -15.775390625,
+        "log_odds_gap": -0.13281249999999994
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -14.6728515625,
+        "mean_logprob_random": -14.3408203125,
+        "log_odds_gap": -0.3320312499999999
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -14.54296875,
+        "mean_logprob_random": -14.147786458333334,
+        "log_odds_gap": -0.3951822916666665
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -18.248046875,
+        "mean_logprob_random": -17.964192708333332,
+        "log_odds_gap": -0.2838541666666668
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -14.61328125,
+        "mean_logprob_random": -14.1796875,
+        "log_odds_gap": -0.43359374999999994
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.263671875,
+        "mean_logprob_random": -17.504557291666668,
+        "log_odds_gap": 0.24088541666666657
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -17.15234375,
+        "mean_logprob_random": -17.423177083333332,
+        "log_odds_gap": 0.27083333333333326
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 16,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.4826227501034737,
+        "mean_logprob_random": -4.304525464773178,
+        "log_odds_gap": 0.8219027146697044
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.5759319737553596,
+        "mean_logprob_random": -4.274546045809984,
+        "log_odds_gap": 0.6986140720546247
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.8630801062099636,
+        "mean_logprob_random": -4.045371780637652,
+        "log_odds_gap": 1.1822916744276881
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.3515540584921837,
+        "mean_logprob_random": -2.8697832052906356,
+        "log_odds_gap": 0.5182291467984518
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.3171380013227463,
+        "mean_logprob_random": -3.4291171760608754,
+        "log_odds_gap": 1.111979174738129
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.573067355901003,
+        "mean_logprob_random": -3.1056194516519704,
+        "log_odds_gap": 0.5325520957509676
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.109463838860393,
+        "mean_logprob_random": -4.292970650518934,
+        "log_odds_gap": 0.1835068116585414
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.412045232951641,
+        "mean_logprob_random": -4.676760834952195,
+        "log_odds_gap": 0.26471560200055444
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -3.957014356739819,
+        "mean_logprob_random": -3.895816436658303,
+        "log_odds_gap": -0.06119792008151609
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.285222209990025,
+        "mean_logprob_random": -4.856145131712158,
+        "log_odds_gap": 0.570922921722134
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 32,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.2495067302079406,
+        "mean_logprob_random": -8.522515151669117,
+        "log_odds_gap": 7.273008421461175
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.494063316403949,
+        "mean_logprob_random": -13.652724755462259,
+        "log_odds_gap": 11.15866143905831
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.366728226975411,
+        "mean_logprob_random": -10.769723002798855,
+        "log_odds_gap": 9.402994775823444
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.7204082165830812,
+        "mean_logprob_random": -11.480824910104275,
+        "log_odds_gap": 10.760416693521194
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.5804909715820443,
+        "mean_logprob_random": -11.07723570552965,
+        "log_odds_gap": 9.496744733947606
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.526129705816004,
+        "mean_logprob_random": -10.974697497828553,
+        "log_odds_gap": 8.448567792012549
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -8.212262842804193,
+        "mean_logprob_random": -7.602753459087883,
+        "log_odds_gap": -0.60950938371631
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.83180733397603,
+        "mean_logprob_random": -5.414598207299908,
+        "log_odds_gap": 0.5827908733238777
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.580257182824425,
+        "mean_logprob_random": -7.010595767069996,
+        "log_odds_gap": 0.43033858424557064
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -10.11485455185175,
+        "mean_logprob_random": -9.40079646908695,
+        "log_odds_gap": -0.7140580827647985
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 48,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0472677546204068,
+        "mean_logprob_random": -6.448090664188688,
+        "log_odds_gap": 5.400822909568281
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.35222221029926,
+        "mean_logprob_random": -9.300920074718306,
+        "log_odds_gap": 6.948697864419046
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0275680585768896,
+        "mean_logprob_random": -7.355693046546851,
+        "log_odds_gap": 6.328124987969962
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.8158111581269765,
+        "mean_logprob_random": -7.575576779277374,
+        "log_odds_gap": 6.759765621150398
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.8649603965864117,
+        "mean_logprob_random": -8.250377095032794,
+        "log_odds_gap": 6.385416698446382
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.7277626460236206,
+        "mean_logprob_random": -8.34755430261915,
+        "log_odds_gap": 6.619791656595528
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.257399174850434,
+        "mean_logprob_random": -6.033761673451711,
+        "log_odds_gap": -0.22363750139872235
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.337482185102999,
+        "mean_logprob_random": -4.593950046847264,
+        "log_odds_gap": 0.2564678617442648
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.407336731441319,
+        "mean_logprob_random": -5.5036908655699035,
+        "log_odds_gap": 0.09635413412858428
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.549364851554856,
+        "mean_logprob_random": -6.874888522744489,
+        "log_odds_gap": -0.6744763288103665
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 64,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0795287797227502,
+        "mean_logprob_random": -6.188537958078086,
+        "log_odds_gap": 5.109009178355336
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.3894395569177505,
+        "mean_logprob_random": -9.265841644674461,
+        "log_odds_gap": 6.876402087756712
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.9390806835588137,
+        "mean_logprob_random": -7.235955667759602,
+        "log_odds_gap": 6.296874984200788
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.8194549282654862,
+        "mean_logprob_random": -7.585730973631144,
+        "log_odds_gap": 6.766276045365657
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.7824389978204636,
+        "mean_logprob_random": -8.27527758560609,
+        "log_odds_gap": 6.492838587785627
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.7422540608799295,
+        "mean_logprob_random": -8.23509260158365,
+        "log_odds_gap": 6.49283854070372
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.02691345103085,
+        "mean_logprob_random": -7.141070145027091,
+        "log_odds_gap": 1.1141566939962408
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.319972103461623,
+        "mean_logprob_random": -4.60265238257125,
+        "log_odds_gap": 0.282680279109627
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.345830413047224,
+        "mean_logprob_random": -5.45520547159443,
+        "log_odds_gap": 0.10937505854720564
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.470822290633805,
+        "mean_logprob_random": -7.198200164013542,
+        "log_odds_gap": -0.2726221266202628
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "step": 80,
+    "train_edges": [
+      {
+        "edge": [
+          0,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.0676091573550366,
+        "mean_logprob_random": -6.356350234244019,
+        "log_odds_gap": 5.288741076888982
+      },
+      {
+        "edge": [
+          0,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -2.3716002872779427,
+        "mean_logprob_random": -9.77981509049035,
+        "log_odds_gap": 7.408214803212407
+      },
+      {
+        "edge": [
+          0,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.9307230810600231,
+        "mean_logprob_random": -7.598691806197166,
+        "log_odds_gap": 6.667968725137143
+      },
+      {
+        "edge": [
+          1,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -0.8492555153096788,
+        "mean_logprob_random": -7.625297153368592,
+        "log_odds_gap": 6.7760416380589135
+      },
+      {
+        "edge": [
+          2,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.8187157406111965,
+        "mean_logprob_random": -8.471710501471534,
+        "log_odds_gap": 6.652994760860338
+      },
+      {
+        "edge": [
+          3,
+          0
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -1.8746913536670027,
+        "mean_logprob_random": -8.838884120651832,
+        "log_odds_gap": 6.964192766984828
+      }
+    ],
+    "test_edges": [
+      {
+        "edge": [
+          1,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -6.20734887290746,
+        "mean_logprob_random": -5.942279052532588,
+        "log_odds_gap": -0.2650698203748712
+      },
+      {
+        "edge": [
+          2,
+          1
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -4.3452007956802845,
+        "mean_logprob_random": -4.887904541566968,
+        "log_odds_gap": 0.5427037458866835
+      },
+      {
+        "edge": [
+          2,
+          3
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -5.356554947793484,
+        "mean_logprob_random": -5.603950786404312,
+        "log_odds_gap": 0.24739583861082798
+      },
+      {
+        "edge": [
+          3,
+          2
+        ],
+        "n_examples": 32,
+        "mean_logprob_correct": -7.707250481820665,
+        "mean_logprob_random": -7.57597579266682,
+        "log_odds_gap": -0.13127468915384577
+      }
+    ]
+  }
+]

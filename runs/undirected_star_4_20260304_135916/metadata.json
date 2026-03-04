@@ -1,0 +1,652 @@
+[
+  {
+    "repeat_id": 0,
+    "n_categories": 5,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "categories": [
+      "number",
+      "colour",
+      "country",
+      "animal",
+      "verb"
+    ],
+    "bijection": [
+      {
+        "number": "11",
+        "colour": "red",
+        "country": "Iceland",
+        "animal": "tiger",
+        "verb": "climbing"
+      },
+      {
+        "number": "5",
+        "colour": "brown",
+        "country": "Chad",
+        "animal": "frog",
+        "verb": "weaving"
+      },
+      {
+        "number": "17",
+        "colour": "blue",
+        "country": "Nepal",
+        "animal": "vole",
+        "verb": "carving"
+      },
+      {
+        "number": "2",
+        "colour": "yellow",
+        "country": "Brazil",
+        "animal": "eagle",
+        "verb": "drawing"
+      },
+      {
+        "number": "13",
+        "colour": "pink",
+        "country": "France",
+        "animal": "dog",
+        "verb": "hunting"
+      },
+      {
+        "number": "7",
+        "colour": "green",
+        "country": "Peru",
+        "animal": "shark",
+        "verb": "running"
+      },
+      {
+        "number": "23",
+        "colour": "purple",
+        "country": "Kenya",
+        "animal": "moth",
+        "verb": "diving"
+      },
+      {
+        "number": "31",
+        "colour": "orange",
+        "country": "Oman",
+        "animal": "newt",
+        "verb": "brewing"
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "n_categories": 5,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "categories": [
+      "mineral",
+      "colour",
+      "object",
+      "animal",
+      "country"
+    ],
+    "bijection": [
+      {
+        "mineral": "mica",
+        "colour": "blue",
+        "object": "lantern",
+        "animal": "newt",
+        "country": "Iceland"
+      },
+      {
+        "mineral": "flint",
+        "colour": "purple",
+        "object": "barrel",
+        "animal": "shark",
+        "country": "Peru"
+      },
+      {
+        "mineral": "quartz",
+        "colour": "green",
+        "object": "ladder",
+        "animal": "eagle",
+        "country": "France"
+      },
+      {
+        "mineral": "chalk",
+        "colour": "pink",
+        "object": "table",
+        "animal": "tiger",
+        "country": "Brazil"
+      },
+      {
+        "mineral": "garnet",
+        "colour": "yellow",
+        "object": "mirror",
+        "animal": "frog",
+        "country": "Chad"
+      },
+      {
+        "mineral": "jade",
+        "colour": "red",
+        "object": "compass",
+        "animal": "moth",
+        "country": "Kenya"
+      },
+      {
+        "mineral": "topaz",
+        "colour": "brown",
+        "object": "anvil",
+        "animal": "vole",
+        "country": "Oman"
+      },
+      {
+        "mineral": "pyrite",
+        "colour": "orange",
+        "object": "pulley",
+        "animal": "dog",
+        "country": "Nepal"
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "n_categories": 5,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "categories": [
+      "country",
+      "number",
+      "verb",
+      "fruit",
+      "object"
+    ],
+    "bijection": [
+      {
+        "country": "Chad",
+        "number": "23",
+        "verb": "carving",
+        "fruit": "plum",
+        "object": "anvil"
+      },
+      {
+        "country": "Kenya",
+        "number": "7",
+        "verb": "climbing",
+        "fruit": "pear",
+        "object": "lantern"
+      },
+      {
+        "country": "Brazil",
+        "number": "5",
+        "verb": "diving",
+        "fruit": "apple",
+        "object": "mirror"
+      },
+      {
+        "country": "Peru",
+        "number": "17",
+        "verb": "brewing",
+        "fruit": "lime",
+        "object": "compass"
+      },
+      {
+        "country": "Nepal",
+        "number": "11",
+        "verb": "running",
+        "fruit": "grape",
+        "object": "table"
+      },
+      {
+        "country": "Oman",
+        "number": "2",
+        "verb": "weaving",
+        "fruit": "lemon",
+        "object": "ladder"
+      },
+      {
+        "country": "Iceland",
+        "number": "31",
+        "verb": "hunting",
+        "fruit": "mango",
+        "object": "barrel"
+      },
+      {
+        "country": "France",
+        "number": "13",
+        "verb": "drawing",
+        "fruit": "fig",
+        "object": "pulley"
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "n_categories": 5,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "categories": [
+      "number",
+      "mineral",
+      "country",
+      "animal",
+      "verb"
+    ],
+    "bijection": [
+      {
+        "number": "7",
+        "mineral": "quartz",
+        "country": "Kenya",
+        "animal": "tiger",
+        "verb": "weaving"
+      },
+      {
+        "number": "31",
+        "mineral": "jade",
+        "country": "Oman",
+        "animal": "newt",
+        "verb": "climbing"
+      },
+      {
+        "number": "5",
+        "mineral": "pyrite",
+        "country": "Iceland",
+        "animal": "vole",
+        "verb": "hunting"
+      },
+      {
+        "number": "13",
+        "mineral": "flint",
+        "country": "France",
+        "animal": "shark",
+        "verb": "carving"
+      },
+      {
+        "number": "2",
+        "mineral": "garnet",
+        "country": "Chad",
+        "animal": "frog",
+        "verb": "brewing"
+      },
+      {
+        "number": "23",
+        "mineral": "chalk",
+        "country": "Nepal",
+        "animal": "eagle",
+        "verb": "drawing"
+      },
+      {
+        "number": "17",
+        "mineral": "topaz",
+        "country": "Peru",
+        "animal": "dog",
+        "verb": "diving"
+      },
+      {
+        "number": "11",
+        "mineral": "mica",
+        "country": "Brazil",
+        "animal": "moth",
+        "verb": "running"
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "n_categories": 5,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "categories": [
+      "fruit",
+      "number",
+      "colour",
+      "animal",
+      "country"
+    ],
+    "bijection": [
+      {
+        "fruit": "lemon",
+        "number": "5",
+        "colour": "green",
+        "animal": "shark",
+        "country": "France"
+      },
+      {
+        "fruit": "plum",
+        "number": "2",
+        "colour": "yellow",
+        "animal": "dog",
+        "country": "Oman"
+      },
+      {
+        "fruit": "mango",
+        "number": "7",
+        "colour": "orange",
+        "animal": "vole",
+        "country": "Peru"
+      },
+      {
+        "fruit": "apple",
+        "number": "23",
+        "colour": "pink",
+        "animal": "newt",
+        "country": "Chad"
+      },
+      {
+        "fruit": "fig",
+        "number": "31",
+        "colour": "purple",
+        "animal": "eagle",
+        "country": "Nepal"
+      },
+      {
+        "fruit": "grape",
+        "number": "11",
+        "colour": "red",
+        "animal": "frog",
+        "country": "Kenya"
+      },
+      {
+        "fruit": "pear",
+        "number": "17",
+        "colour": "blue",
+        "animal": "tiger",
+        "country": "Brazil"
+      },
+      {
+        "fruit": "lime",
+        "number": "13",
+        "colour": "brown",
+        "animal": "moth",
+        "country": "Iceland"
+      }
+    ]
+  }
+]

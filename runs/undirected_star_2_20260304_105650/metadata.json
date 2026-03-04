@@ -1,0 +1,402 @@
+[
+  {
+    "repeat_id": 0,
+    "n_categories": 3,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "categories": [
+      "number",
+      "colour",
+      "country"
+    ],
+    "bijection": [
+      {
+        "number": "13",
+        "colour": "red",
+        "country": "Peru"
+      },
+      {
+        "number": "5",
+        "colour": "brown",
+        "country": "Kenya"
+      },
+      {
+        "number": "23",
+        "colour": "pink",
+        "country": "Iceland"
+      },
+      {
+        "number": "17",
+        "colour": "blue",
+        "country": "Nepal"
+      },
+      {
+        "number": "2",
+        "colour": "orange",
+        "country": "Brazil"
+      },
+      {
+        "number": "7",
+        "colour": "green",
+        "country": "France"
+      },
+      {
+        "number": "11",
+        "colour": "yellow",
+        "country": "Oman"
+      },
+      {
+        "number": "31",
+        "colour": "purple",
+        "country": "Chad"
+      }
+    ]
+  },
+  {
+    "repeat_id": 1,
+    "n_categories": 3,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "categories": [
+      "country",
+      "animal",
+      "number"
+    ],
+    "bijection": [
+      {
+        "country": "Iceland",
+        "animal": "moth",
+        "number": "5"
+      },
+      {
+        "country": "Peru",
+        "animal": "tiger",
+        "number": "13"
+      },
+      {
+        "country": "Brazil",
+        "animal": "eagle",
+        "number": "7"
+      },
+      {
+        "country": "France",
+        "animal": "dog",
+        "number": "23"
+      },
+      {
+        "country": "Nepal",
+        "animal": "shark",
+        "number": "17"
+      },
+      {
+        "country": "Kenya",
+        "animal": "newt",
+        "number": "11"
+      },
+      {
+        "country": "Chad",
+        "animal": "vole",
+        "number": "2"
+      },
+      {
+        "country": "Oman",
+        "animal": "frog",
+        "number": "31"
+      }
+    ]
+  },
+  {
+    "repeat_id": 2,
+    "n_categories": 3,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "categories": [
+      "colour",
+      "country",
+      "number"
+    ],
+    "bijection": [
+      {
+        "colour": "orange",
+        "country": "Brazil",
+        "number": "11"
+      },
+      {
+        "colour": "red",
+        "country": "Chad",
+        "number": "5"
+      },
+      {
+        "colour": "blue",
+        "country": "Peru",
+        "number": "31"
+      },
+      {
+        "colour": "pink",
+        "country": "Kenya",
+        "number": "17"
+      },
+      {
+        "colour": "purple",
+        "country": "Oman",
+        "number": "7"
+      },
+      {
+        "colour": "yellow",
+        "country": "Iceland",
+        "number": "13"
+      },
+      {
+        "colour": "green",
+        "country": "France",
+        "number": "2"
+      },
+      {
+        "colour": "brown",
+        "country": "Nepal",
+        "number": "23"
+      }
+    ]
+  },
+  {
+    "repeat_id": 3,
+    "n_categories": 3,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "categories": [
+      "colour",
+      "number",
+      "verb"
+    ],
+    "bijection": [
+      {
+        "colour": "yellow",
+        "number": "31",
+        "verb": "drawing"
+      },
+      {
+        "colour": "purple",
+        "number": "11",
+        "verb": "climbing"
+      },
+      {
+        "colour": "green",
+        "number": "17",
+        "verb": "hunting"
+      },
+      {
+        "colour": "red",
+        "number": "23",
+        "verb": "brewing"
+      },
+      {
+        "colour": "blue",
+        "number": "5",
+        "verb": "weaving"
+      },
+      {
+        "colour": "brown",
+        "number": "13",
+        "verb": "diving"
+      },
+      {
+        "colour": "pink",
+        "number": "2",
+        "verb": "running"
+      },
+      {
+        "colour": "orange",
+        "number": "7",
+        "verb": "carving"
+      }
+    ]
+  },
+  {
+    "repeat_id": 4,
+    "n_categories": 3,
+    "k": 8,
+    "topology_train": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "topology_test": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "categories": [
+      "verb",
+      "colour",
+      "mineral"
+    ],
+    "bijection": [
+      {
+        "verb": "diving",
+        "colour": "pink",
+        "mineral": "topaz"
+      },
+      {
+        "verb": "hunting",
+        "colour": "orange",
+        "mineral": "chalk"
+      },
+      {
+        "verb": "climbing",
+        "colour": "purple",
+        "mineral": "flint"
+      },
+      {
+        "verb": "weaving",
+        "colour": "brown",
+        "mineral": "pyrite"
+      },
+      {
+        "verb": "brewing",
+        "colour": "green",
+        "mineral": "quartz"
+      },
+      {
+        "verb": "carving",
+        "colour": "yellow",
+        "mineral": "garnet"
+      },
+      {
+        "verb": "running",
+        "colour": "red",
+        "mineral": "jade"
+      },
+      {
+        "verb": "drawing",
+        "colour": "blue",
+        "mineral": "mica"
+      }
+    ]
+  }
+]
