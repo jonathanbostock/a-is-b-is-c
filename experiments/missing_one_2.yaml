@@ -1,7 +1,7 @@
 train_topology:
   - [1, 0]
 n_categories: 2
-n_repeats: 5
+n_repeats: 3
 k: 8
 batch_size: 64
 num_steps: 50
