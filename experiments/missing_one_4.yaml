@@ -1,0 +1,21 @@
+train_topology:
+  - [1, 0]
+  - [1, 2]
+  - [2, 1]
+  - [0, 2]
+  - [2, 0]
+  - [0, 3]
+  - [3, 0]
+  - [1, 3]
+  - [3, 1]
+  - [2, 3]
+  - [3, 2]
+n_categories: 4
+n_repeats: 5
+k: 8
+batch_size: 128
+num_steps: 80
+eval_every: 16
+lr: 0.0004
+output_dir: ./runs/missing_one_4
+skip_train: false
