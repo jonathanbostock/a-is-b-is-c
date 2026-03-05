@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-a-is-b-is-c = "a_is_b_is_c.run:main"
+a-is-b-is-c = "pretrained_llms.run:main"
 
 [dependency-groups]
 dev = [
@@ -37,5 +37,5 @@ requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["a_is_b_is_c*"]
+include = ["pretrained_llms*", "toy_models*", "plotting*"]
 exclude = ["runs*"]

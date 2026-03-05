@@ -1,4 +1,4 @@
-from a_is_b_is_c.run import main
+from pretrained_llms.run import main
 
 
 if __name__ == "__main__":

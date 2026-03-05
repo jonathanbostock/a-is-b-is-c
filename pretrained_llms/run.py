@@ -31,7 +31,7 @@ def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
     if config_path.suffix != ".yaml":
         config_path = Path("experiments") / f"{cli_args.config}.yaml"
 
-    default_config_path = Path("a_is_b_is_c/config.yaml")
+    default_config_path = Path("pretrained_llms/config.yaml")
     with default_config_path.open("r", encoding="utf-8") as handle:
         default_config = yaml.safe_load(handle)
 
