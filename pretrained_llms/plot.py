@@ -164,12 +164,11 @@ def plot_topology_results(
     ax_train_plot.set_title("Train-edge log-odds gap")
     ax_train_plot.set_xlabel("Training step")
     ax_train_plot.set_ylabel("Log P(correct) - Log P(random)")
+    ax_train_plot.set_xscale("symlog", linthresh=1)
     if steps_train:
-        ax_train_plot.set_xticks(steps_train)
         ax_train_plot.set_xlim(min(steps_train), max(steps_train))
     ax_train_plot.margins(x=0)
     style_metric_axis(axis=ax_train_plot)
-    ax_train_plot.legend(loc="best", fontsize=8)
 
     for index, edge in enumerate(test_edges):
         mean_values = np.array(test_means[edge], dtype=float)
@@ -198,12 +197,11 @@ def plot_topology_results(
     ax_test_plot.set_title("Test-edge log-odds gap")
     ax_test_plot.set_xlabel("Training step")
     ax_test_plot.set_ylabel("Log P(correct) - Log P(random)")
+    ax_test_plot.set_xscale("symlog", linthresh=1)
     if steps_test:
-        ax_test_plot.set_xticks(steps_test)
         ax_test_plot.set_xlim(min(steps_test), max(steps_test))
     ax_test_plot.margins(x=0)
     style_metric_axis(axis=ax_test_plot)
-    ax_test_plot.legend(loc="best", fontsize=8)
 
     positions = _circular_positions(n_categories)
     graph = nx.DiGraph()

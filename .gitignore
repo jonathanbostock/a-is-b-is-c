@@ -25,5 +25,6 @@ unsloth_compiled_cache/
 .DS_Store
 
 # Experiment outputs
-runs/
+runs/checkpoints/
+runs/residuals/
 

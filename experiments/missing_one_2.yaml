@@ -1,11 +1,5 @@
 train_topology:
   - [1, 0]
 n_categories: 2
-n_repeats: 5
 k: 8
-batch_size: 64
-num_steps: 50
-eval_every: 10
-lr: 0.0004
 output_dir: ./runs/missing_one_2
-skip_train: false

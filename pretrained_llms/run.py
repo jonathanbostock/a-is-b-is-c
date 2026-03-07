@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
 from pathlib import Path
-import random
 from typing import Any
 
-import yaml
-
-from .dataset import Edge, PromptExample, all_directed_edges, build_run_data, write_examples_jsonl, write_metadata
+from .dataset import Edge, PromptExample, build_run_data, write_examples_jsonl, write_metadata
 from .plot import plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
+from plotting.config import merge_config, resolve_topologies, timestamped_output_dir
+from plotting.pca_plot import plot_residual_pca
+
+_DEFAULT_CONFIG = Path(__file__).parent / "default_config.yaml"
+_CONFIGS_DIR = Path(__file__).parent / "configs"
 
 
 def _build_repeat_buckets(examples: list[PromptExample]) -> dict[int, list[PromptExample]]:
@@ -22,83 +23,34 @@ def _build_repeat_buckets(examples: list[PromptExample]) -> dict[int, list[Promp
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Bostock matching-game topology experiment")
-    parser.add_argument("config", type=str, help="Path to a .yaml experiment config file")
+    parser.add_argument("config", type=str, help="Experiment yaml (stem or path)")
+    parser.add_argument(
+        "model_config", nargs="?", default=None,
+        help="Optional model config stem; looks in pretrained_llms/configs/",
+    )
     return parser.parse_args()
 
 
-def _merge_config(cli_args: argparse.Namespace) -> dict[str, Any]:
+def _load_config(cli_args: argparse.Namespace) -> dict[str, Any]:
     config_path = Path(cli_args.config)
     if config_path.suffix != ".yaml":
         config_path = Path("experiments") / f"{cli_args.config}.yaml"
-
-    default_config_path = Path("pretrained_llms/config.yaml")
-    with default_config_path.open("r", encoding="utf-8") as handle:
-        default_config = yaml.safe_load(handle)
-
-    with config_path.open("r", encoding="utf-8") as handle:
-        config = yaml.safe_load(handle)
-
-    if not isinstance(default_config, dict):
-        msg = f"Default config must be a YAML mapping: {default_config_path}"
-        raise ValueError(msg)
-    if not isinstance(config, dict):
-        msg = f"Experiment config must be a YAML mapping: {config_path}"
-        raise ValueError(msg)
-
-    merged = dict(default_config)
-    merged.update(config)
-    merged["train_topology"] = [tuple(edge) for edge in merged["train_topology"]]
-    if "eval_topology" in merged:
-        merged["eval_topology"] = [tuple(edge) for edge in merged["eval_topology"]]
-    return merged
-
-
-def _resolve_topologies(config: dict[str, Any]) -> tuple[list[Edge], list[Edge] | None]:
-    if "train_p" in config:
-        n_categories = int(config["n_categories"])
-        train_p = float(config["train_p"])
-        seed = int(config["seed"])
-
-        all_edges = all_directed_edges(n_categories)
-        total = len(all_edges)
-        random.Random(seed).shuffle(all_edges)
-
-        n_train = int(train_p * total)
-        topology_train = all_edges[:n_train]
-
-        if "eval_p" in config:
-            eval_p = float(config["eval_p"])
-            effective_eval_p = min(eval_p, 1.0 - train_p)
-            n_eval = int(effective_eval_p * total)
-            topology_eval: list[Edge] | None = all_edges[total - n_eval :] if n_eval > 0 else []
-        else:
-            topology_eval = None
-
-        return topology_train, topology_eval
+    if cli_args.model_config is not None:
+        default_path = _CONFIGS_DIR / f"{cli_args.model_config}.yaml"
     else:
-        topology_train = [(int(s), int(t)) for s, t in config["train_topology"]]
-        topology_eval = (
-            [(int(s), int(t)) for s, t in config["eval_topology"]]
-            if "eval_topology" in config
-            else None
-        )
-        return topology_train, topology_eval
-
-
-def _timestamped_output_dir(base_output_dir: Path) -> Path:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return base_output_dir.parent / f"{base_output_dir.name}_{timestamp}"
+        default_path = _DEFAULT_CONFIG
+    return merge_config(config_path, default_path)
 
 
 def main() -> None:
     args = parse_args()
-    config = _merge_config(args)
+    config = _load_config(args)
 
     base_output_dir = Path(config["output_dir"]).expanduser().resolve()
-    output_dir = _timestamped_output_dir(base_output_dir)
+    output_dir = timestamped_output_dir(base_output_dir, label="llm")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    topology_train, topology_eval = _resolve_topologies(config)
+    topology_train, topology_eval = resolve_topologies(config)
 
     run_data = build_run_data(
         n_repeats=int(config["n_repeats"]),
@@ -137,6 +89,8 @@ def main() -> None:
             batch_size=int(config["batch_size"]),
             grad_accum=int(config["grad_accum"]),
             lora_r=int(config["lora_r"]),
+            use_lora=bool(config.get("use_lora", True)),
+            max_grad_norm=float(config.get("max_grad_norm", 1.0)),
             seed=int(config["seed"]),
             output_dir=str(output_dir),
             model_name=str(config["model_name"]),
@@ -159,6 +113,12 @@ def main() -> None:
             n_categories=int(config["n_categories"]),
             topology_train=topology_train,
         )
+        plot_residual_pca(
+            residuals_file=output_dir / "residuals" / "pca_residuals.json",
+            output_dir=output_dir,
+            k=int(config["k"]),
+        )
+
 
 
 if __name__ == "__main__":

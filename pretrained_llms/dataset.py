@@ -14,6 +14,7 @@ Edge = tuple[int, int]
 class PromptExample:
     repeat_id: int
     edge: Edge
+    group: int          # bijection entry index (0 to k-1)
     template: str
     source_category: str
     source_element: str
@@ -126,7 +127,7 @@ def _sample_repeat(
             target_category = categories[target_index]
             source_category_plural = pluralize_category(source_category)
             target_category_plural = pluralize_category(target_category)
-            for instance in bijection:
+            for group_idx, instance in enumerate(bijection):
                 source_element = instance[source_category]
                 target_element = instance[target_category]
                 for template in templates:
@@ -144,6 +145,7 @@ def _sample_repeat(
                         PromptExample(
                             repeat_id=repeat_id,
                             edge=(source_index, target_index),
+                            group=group_idx,
                             template=template,
                             source_category=source_category,
                             source_element=source_element,

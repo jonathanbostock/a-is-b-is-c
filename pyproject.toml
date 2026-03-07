@@ -20,7 +20,8 @@ dependencies = [
 ]
 
 [project.scripts]
-a-is-b-is-c = "pretrained_llms.run:main"
+pretrained-llms = "pretrained_llms.run:main"
+toy-demo = "toy_models.demo:main"
 
 [dependency-groups]
 dev = [

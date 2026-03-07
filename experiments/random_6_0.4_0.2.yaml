@@ -1,11 +1,5 @@
 train_p: 0.4
 eval_p: 0.2
 n_categories: 6
-n_repeats: 5
 k: 8
-batch_size: 128
-num_steps: 80
-eval_every: 16
-lr: 0.0004
 output_dir: ./runs/random_6_0.4_0.2
-skip_train: false

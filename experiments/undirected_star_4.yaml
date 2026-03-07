@@ -15,11 +15,5 @@ eval_topology:
   - [3, 4]
   - [4, 3]
 n_categories: 5
-n_repeats: 5
 k: 8
-batch_size: 128
-num_steps: 100
-eval_every: 20
-lr: 0.0003
 output_dir: ./runs/undirected_star_4
-skip_train: false

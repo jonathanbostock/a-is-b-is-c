@@ -36,11 +36,19 @@ class CausalSelfAttention(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, d_model: int, n_heads: int) -> None:
         super().__init__()
-        self.ln = nn.LayerNorm(d_model)
+        self.ln1 = nn.LayerNorm(d_model)
         self.attn = CausalSelfAttention(d_model, n_heads)
+        self.ln2 = nn.LayerNorm(d_model)
+        self.mlp = nn.Sequential(
+            nn.Linear(d_model, 4 * d_model),
+            nn.GELU(),
+            nn.Linear(4 * d_model, d_model),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x + self.attn(self.ln(x))
+        x = x + self.attn(self.ln1(x))
+        x = x + self.mlp(self.ln2(x))
+        return x
 
 
 class ToyTransformer(nn.Module):
@@ -50,7 +58,7 @@ class ToyTransformer(nn.Module):
     Input:  token sequence of length 4: [BOS, cat_x, cat_x_grp_y, cat_z]
     Output: logits at the last position predict cat_z_grp_y.
 
-    No MLP layers — attention-only, which is sufficient for this task.
+    Standard pre-norm architecture: attention + MLP sublayers with residuals.
     """
 
     def __init__(
@@ -75,6 +83,21 @@ class ToyTransformer(nn.Module):
         for block in self.blocks:
             h = block(h)
         return self.unembed(self.ln_f(h))
+
+    def get_residual_at_layer(self, x: torch.Tensor, layer_idx: int) -> torch.Tensor:
+        """Return the hidden state after block[layer_idx] on the final token.
+
+        Shape: (B, d_model). layer_idx is clamped to [0, n_layers-1].
+        """
+        B, T = x.shape
+        pos = torch.arange(T, device=x.device)
+        h = self.embed(x) + self.pos_embed(pos)
+        target = min(layer_idx, len(self.blocks) - 1)
+        for i, block in enumerate(self.blocks):
+            h = block(h)
+            if i == target:
+                return h[:, -1, :]
+        return h[:, -1, :]
 
     def count_params(self) -> int:
         return sum(p.numel() for p in self.parameters())

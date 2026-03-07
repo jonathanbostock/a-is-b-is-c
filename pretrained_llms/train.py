@@ -10,8 +10,14 @@ from typing import Any
 
 from datasets import Dataset
 
-from .dataset import PromptExample
-from .evaluate import append_eval_result, evaluate_step
+from .dataset import Edge, PromptExample
+from .evaluate import (
+    append_eval_result,
+    append_residual_step,
+    collect_residuals_per_edge_group,
+    evaluate_step,
+    residual_layer_idx,
+)
 
 
 @lru_cache(maxsize=1)
@@ -37,6 +43,8 @@ class TrainingConfig:
     batch_size: int = 8
     grad_accum: int = 2
     lora_r: int = 16
+    use_lora: bool = True
+    max_grad_norm: float = 1.0
     seed: int = 42
     output_dir: str = "./runs"
     model_name: str = "google/gemma-3-1b-pt"
@@ -128,6 +136,7 @@ def run_single_repeat_training(
     transformers_module, peft_module, liger_module = _load_training_modules()
 
     AutoTokenizer = transformers_module.AutoTokenizer
+    AutoModelForCausalLM = transformers_module.AutoModelForCausalLM
     BitsAndBytesConfig = transformers_module.BitsAndBytesConfig
     DataCollatorForSeq2Seq = transformers_module.DataCollatorForSeq2Seq
     Trainer = transformers_module.Trainer
@@ -138,27 +147,46 @@ def run_single_repeat_training(
     TaskType = peft_module.TaskType
     get_peft_model = peft_module.get_peft_model
 
+    def _load_model(**kwargs: Any) -> Any:
+        try:
+            return AutoLigerKernelForCausalLM.from_pretrained(config.model_name, **kwargs)
+        except KeyError:
+            return AutoModelForCausalLM.from_pretrained(config.model_name, **kwargs)
+
     class _PeriodicEvalCallback(TrainerCallback):
         def __init__(
             self,
             *,
             eval_file: Path,
+            residuals_file: Path,
             tokenizer: Any,
             eval_train_examples: list[PromptExample],
             eval_test_examples: list[PromptExample],
+            residual_train_examples: list[PromptExample],
             seed: int,
             eval_every: int,
+            max_steps: int,
+            layer_idx: int,
         ) -> None:
             self.eval_file = eval_file
+            self.residuals_file = residuals_file
             self.tokenizer = tokenizer
             self.eval_train_examples = eval_train_examples
             self.eval_test_examples = eval_test_examples
+            self.residual_train_examples = residual_train_examples
             self.seed = seed
-            self.eval_every = eval_every
+            self.layer_idx = layer_idx
+            # Dense early evals (powers of 2) plus regular eval_every steps
+            self.eval_steps: set[int] = set(range(eval_every, max_steps + 1, eval_every))
+            self.eval_steps.add(max_steps)
+            p = 1
+            while p < eval_every:
+                self.eval_steps.add(min(p, max_steps))
+                p *= 2
 
-        def on_save(self, args: Any, state: Any, control: Any, **kwargs: Any) -> Any:
+        def on_step_end(self, args: Any, state: Any, control: Any, **kwargs: Any) -> Any:
             step = int(state.global_step)
-            if step <= 0 or step % self.eval_every != 0:
+            if step not in self.eval_steps:
                 return control
             model = kwargs.get("model")
             if model is None:
@@ -173,45 +201,89 @@ def run_single_repeat_training(
                 eval_test_examples=self.eval_test_examples,
                 seed=self.seed,
             )
+            train_residuals = collect_residuals_per_edge_group(
+                model=model,
+                tokenizer=self.tokenizer,
+                examples=self.residual_train_examples,
+                layer_idx=self.layer_idx,
+            )
+            test_residuals = collect_residuals_per_edge_group(
+                model=model,
+                tokenizer=self.tokenizer,
+                examples=self.eval_test_examples,
+                layer_idx=self.layer_idx,
+            )
             model.train()
             append_eval_result(self.eval_file, result)
+            append_residual_step(
+                self.residuals_file,
+                step=step,
+                repeat_id=repeat_id,
+                layer_idx=self.layer_idx,
+                train_residuals=train_residuals,
+                test_residuals=test_residuals,
+            )
             return control
 
-    repeat_dir = run_dir / "checkpoints" / f"repeat_{repeat_id}"
-    repeat_dir.mkdir(parents=True, exist_ok=True)
+    residuals_dir = run_dir / "residuals"
+    residuals_dir.mkdir(parents=True, exist_ok=True)
+    residuals_file = residuals_dir / "pca_residuals.json"
 
     torch = importlib.import_module("torch")
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4",
-    )
     tokenizer = AutoTokenizer.from_pretrained(config.model_name)
-    model = AutoLigerKernelForCausalLM.from_pretrained(
-        config.model_name,
-        quantization_config=bnb_config,
-        attn_implementation="eager",
-        torch_dtype=torch.bfloat16,
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if config.use_lora:
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
+        model = _load_model(
+            quantization_config=bnb_config,
+            attn_implementation="eager",
+            dtype=torch.bfloat16,
+        )
+        model.enable_input_require_grads()
+        lora_config = LoraConfig(
+            r=config.lora_r,
+            lora_alpha=16,
+            target_modules=[
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
+            ],
+            lora_dropout=0.0,
+            bias="none",
+            task_type=TaskType.CAUSAL_LM,
+        )
+        model = get_peft_model(model, lora_config)
+    else:
+        model = _load_model(
+            attn_implementation="eager",
+            dtype=torch.bfloat16,
+        )
+
+    # Residual analysis setup: determine target layer and sample ≤8 train edges
+    n_layers = model.config.num_hidden_layers
+    layer_idx = residual_layer_idx(n_layers)
+    rng_edges = random.Random(config.seed + repeat_id)
+    all_train_edges: list[Edge] = sorted(
+        {example.edge for example in repeat_eval_train_examples}
     )
-    model.enable_input_require_grads()
-    lora_config = LoraConfig(
-        r=config.lora_r,
-        lora_alpha=16,
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
-        lora_dropout=0.0,
-        bias="none",
-        task_type=TaskType.CAUSAL_LM,
-    )
-    model = get_peft_model(model, lora_config)
+    if len(all_train_edges) > 8:
+        selected_train_edges = set(rng_edges.sample(all_train_edges, 8))
+    else:
+        selected_train_edges = set(all_train_edges)
+    residual_train_examples = [
+        ex for ex in repeat_eval_train_examples if ex.edge in selected_train_edges
+    ]
 
     train_dataset = _build_randomized_training_dataset(
         examples=repeat_train_examples,
@@ -224,7 +296,7 @@ def run_single_repeat_training(
     )
 
     training_args = TrainingArguments(
-        output_dir=str(repeat_dir),
+        output_dir=str(run_dir / "trainer_tmp"),
         per_device_train_batch_size=config.batch_size,
         gradient_accumulation_steps=config.grad_accum,
         num_train_epochs=1,
@@ -232,8 +304,9 @@ def run_single_repeat_training(
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
         optim="adamw_torch_fused",
+        max_grad_norm=config.max_grad_norm,
         logging_steps=10,
-        save_steps=config.eval_every,
+        save_strategy="no",
         seed=config.seed + repeat_id,
         report_to="none",
         gradient_checkpointing=True,
@@ -247,11 +320,15 @@ def run_single_repeat_training(
     repeat_seed = config.seed + repeat_id
     periodic_eval_callback = _PeriodicEvalCallback(
         eval_file=eval_file,
+        residuals_file=residuals_file,
         tokenizer=tokenizer,
         eval_train_examples=repeat_eval_train_examples,
         eval_test_examples=repeat_eval_test_examples,
+        residual_train_examples=residual_train_examples,
         seed=repeat_seed,
         eval_every=config.eval_every,
+        max_steps=config.max_steps,
+        layer_idx=layer_idx,
     )
 
     trainer = Trainer(
@@ -262,6 +339,7 @@ def run_single_repeat_training(
         callbacks=[periodic_eval_callback],
     )
 
+    trainer.model.eval()
     initial_result = evaluate_step(
         model=trainer.model,
         tokenizer=tokenizer,
@@ -271,6 +349,27 @@ def run_single_repeat_training(
         eval_test_examples=repeat_eval_test_examples,
         seed=repeat_seed,
     )
+    initial_train_residuals = collect_residuals_per_edge_group(
+        model=trainer.model,
+        tokenizer=tokenizer,
+        examples=residual_train_examples,
+        layer_idx=layer_idx,
+    )
+    initial_test_residuals = collect_residuals_per_edge_group(
+        model=trainer.model,
+        tokenizer=tokenizer,
+        examples=repeat_eval_test_examples,
+        layer_idx=layer_idx,
+    )
+    trainer.model.train()
     append_eval_result(eval_file, initial_result)
+    append_residual_step(
+        residuals_file,
+        step=0,
+        repeat_id=repeat_id,
+        layer_idx=layer_idx,
+        train_residuals=initial_train_residuals,
+        test_residuals=initial_test_residuals,
+    )
 
     trainer.train()

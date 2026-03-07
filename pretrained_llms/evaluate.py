@@ -9,8 +9,10 @@ import random
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from .categories import CATEGORY_POOL
-from .dataset import PromptExample
+from .dataset import Edge, PromptExample
 
 
 @dataclass(slots=True)
@@ -184,3 +186,91 @@ def read_eval_results(output_file: Path) -> list[dict[str, Any]]:
     if not output_file.exists():
         return []
     return json.loads(output_file.read_text(encoding="utf-8"))
+
+
+def residual_layer_idx(n_layers: int) -> int:
+    """Return the layer index closest to 3/4 of the way through the network."""
+    return max(0, round(n_layers * 3 / 4) - 1)
+
+
+def _get_residual_for_prompt(
+    *,
+    model: Any,
+    tokenizer: Any,
+    prompt: str,
+    layer_idx: int,
+) -> np.ndarray:
+    """Tokenize prompt and return the residual at layer_idx on the last token.
+
+    Uses output_hidden_states=True. hidden_states[0] is the embedding output,
+    hidden_states[i+1] is the output after transformer layer i.
+    """
+    torch = importlib.import_module("torch")
+    input_ids = tokenizer(prompt, add_special_tokens=False, return_tensors="pt")["input_ids"]
+    input_ids = input_ids.to(model.device)
+    with torch.no_grad():
+        outputs = model(input_ids=input_ids, output_hidden_states=True)
+    hidden = outputs.hidden_states[layer_idx + 1]  # (1, seq_len, d_model)
+    return hidden[0, -1, :].float().cpu().numpy()
+
+
+def collect_residuals_per_edge_group(
+    *,
+    model: Any,
+    tokenizer: Any,
+    examples: list[PromptExample],
+    layer_idx: int,
+) -> list[dict[str, Any]]:
+    """For each (edge, group) pair, compute the mean residual over all templates.
+
+    Returns a list of dicts with keys: edge, group, residual.
+    """
+    sums: dict[tuple[Edge, int], np.ndarray] = {}
+    counts: dict[tuple[Edge, int], int] = defaultdict(int)
+
+    for example in examples:
+        key = (example.edge, example.group)
+        vec = _get_residual_for_prompt(
+            model=model,
+            tokenizer=tokenizer,
+            prompt=example.prompt,
+            layer_idx=layer_idx,
+        )
+        if key in sums:
+            sums[key] += vec
+        else:
+            sums[key] = vec.copy()
+        counts[key] += 1
+
+    return [
+        {
+            "edge": list(edge),
+            "group": group,
+            "residual": (sums[(edge, group)] / counts[(edge, group)]).tolist(),
+        }
+        for edge, group in sorted(sums.keys())
+    ]
+
+
+def append_residual_step(
+    output_file: Path,
+    *,
+    step: int,
+    repeat_id: int,
+    layer_idx: int,
+    train_residuals: list[dict[str, Any]],
+    test_residuals: list[dict[str, Any]],
+) -> None:
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    if output_file.exists():
+        existing: list[dict[str, Any]] = json.loads(output_file.read_text(encoding="utf-8"))
+    else:
+        existing = []
+    existing.append({
+        "step": step,
+        "repeat_id": repeat_id,
+        "layer_idx": layer_idx,
+        "train_residuals": train_residuals,
+        "test_residuals": test_residuals,
+    })
+    output_file.write_text(json.dumps(existing, indent=2), encoding="utf-8")
