@@ -1,0 +1,30 @@
+{
+  "model_name": "EleutherAI/pythia-70m",
+  "max_seq_length": 256,
+  "n_repeats": 3,
+  "n_train_templates": 8,
+  "n_eval_templates": 4,
+  "num_steps": 100000,
+  "eval_every": 5000,
+  "warmup_ratio": 0.01,
+  "batch_size": 64,
+  "grad_accum": 1,
+  "lr": "2e-4",
+  "load_in_4bit": false,
+  "lora_r": 16,
+  "use_lora": true,
+  "lora_target_modules": [
+    "query_key_value",
+    "dense",
+    "dense_h_to_4h",
+    "dense_4h_to_h"
+  ],
+  "max_grad_norm": 1.0,
+  "seed": 42,
+  "output_dir": "./runs/random_6_0.4_0.2",
+  "skip_train": false,
+  "train_p": 0.4,
+  "eval_p": 0.2,
+  "n_categories": 6,
+  "k": 8
+}

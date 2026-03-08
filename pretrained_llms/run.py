@@ -4,6 +4,8 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+import json
+
 from .dataset import Edge, PromptExample, build_run_data, write_examples_jsonl, write_metadata
 from .plot import plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
@@ -63,7 +65,9 @@ def main() -> None:
         seed=int(config["seed"]),
     )
 
-    write_metadata(run_data.metadata, output_dir / "metadata.json")
+    write_metadata(run_data.metadata, output_dir / "topology_metadata.json")
+    run_config_path = output_dir / "run_config_metadata.json"
+    run_config_path.write_text(json.dumps(config, indent=2, default=str), encoding="utf-8")
     write_examples_jsonl(run_data.train_examples, output_dir / "train_dataset.jsonl")
     write_examples_jsonl(run_data.eval_train_edge_examples, output_dir / "eval_train_edges.jsonl")
     write_examples_jsonl(run_data.eval_test_edge_examples, output_dir / "eval_test_edges.jsonl")
@@ -86,10 +90,13 @@ def main() -> None:
             max_steps=max_steps,
             eval_every=eval_every,
             lr=float(config["lr"]),
+            warmup_ratio=float(config.get("warmup_ratio", 0.0)),
             batch_size=int(config["batch_size"]),
             grad_accum=int(config["grad_accum"]),
             lora_r=int(config["lora_r"]),
             use_lora=bool(config.get("use_lora", True)),
+            lora_target_modules=list(config["lora_target_modules"]) if "lora_target_modules" in config else None,
+            load_in_4bit=bool(config.get("load_in_4bit", False)),
             max_grad_norm=float(config.get("max_grad_norm", 1.0)),
             seed=int(config["seed"]),
             output_dir=str(output_dir),

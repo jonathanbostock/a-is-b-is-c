@@ -22,6 +22,7 @@ dependencies = [
 [project.scripts]
 pretrained-llms = "pretrained_llms.run:main"
 toy-demo = "toy_models.demo:main"
+toy-models = "toy_models.demo:main"
 
 [dependency-groups]
 dev = [

@@ -8,8 +8,6 @@ from pathlib import Path
 import random
 from typing import Any
 
-from datasets import Dataset
-
 from .dataset import Edge, PromptExample
 from .evaluate import (
     append_eval_result,
@@ -40,10 +38,13 @@ class TrainingConfig:
     max_steps: int = 500
     eval_every: int = 50
     lr: float = 2e-4
+    warmup_ratio: float = 0.0
     batch_size: int = 8
     grad_accum: int = 2
     lora_r: int = 16
     use_lora: bool = True
+    lora_target_modules: list[str] | None = None
+    load_in_4bit: bool = False
     max_grad_norm: float = 1.0
     seed: int = 42
     output_dir: str = "./runs"
@@ -88,7 +89,7 @@ def _build_randomized_training_dataset(
     batch_size: int,
     grad_accum: int,
     seed: int,
-) -> Dataset:
+) -> Any:
     if not examples:
         msg = "No training examples were provided for this repeat."
         raise ValueError(msg)
@@ -106,22 +107,26 @@ def _build_randomized_training_dataset(
     samples_per_step = batch_size * grad_accum
     total_samples = max_steps * samples_per_step
 
-    rng = random.Random(seed)
-    rows: list[dict[str, Any]] = []
-    for _ in range(total_samples):
-        edge = rng.choice(edges)
-        template = rng.choice(templates_by_edge[edge])
-        selected = rng.choice(grouped[edge][template])
-        rows.append(
-            _build_label_masked_record(
-                tokenizer=tokenizer,
-                prompt=selected.prompt,
-                completion=selected.completion,
-                max_seq_length=max_seq_length,
-            )
-        )
+    torch = importlib.import_module("torch")
 
-    return Dataset.from_list(rows)
+    class _RandomizedDataset(torch.utils.data.IterableDataset):
+        def __len__(self) -> int:
+            return total_samples
+
+        def __iter__(self):
+            rng = random.Random(seed)
+            for _ in range(total_samples):
+                edge = rng.choice(edges)
+                template = rng.choice(templates_by_edge[edge])
+                selected = rng.choice(grouped[edge][template])
+                yield _build_label_masked_record(
+                    tokenizer=tokenizer,
+                    prompt=selected.prompt,
+                    completion=selected.completion,
+                    max_seq_length=max_seq_length,
+                )
+
+    return _RandomizedDataset()
 
 
 def run_single_repeat_training(
@@ -235,30 +240,29 @@ def run_single_repeat_training(
         tokenizer.pad_token = tokenizer.eos_token
 
     if config.use_lora:
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-        )
-        model = _load_model(
-            quantization_config=bnb_config,
-            attn_implementation="eager",
-            dtype=torch.bfloat16,
-        )
+        if config.load_in_4bit:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+            )
+            model = _load_model(
+                quantization_config=bnb_config,
+                attn_implementation="eager",
+                dtype=torch.bfloat16,
+            )
+        else:
+            model = _load_model(
+                attn_implementation="eager",
+                dtype=torch.bfloat16,
+            )
         model.enable_input_require_grads()
+        _default_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         lora_config = LoraConfig(
             r=config.lora_r,
             lora_alpha=16,
-            target_modules=[
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj",
-            ],
+            target_modules=config.lora_target_modules or _default_lora_modules,
             lora_dropout=0.0,
             bias="none",
             task_type=TaskType.CAUSAL_LM,
@@ -301,9 +305,10 @@ def run_single_repeat_training(
         gradient_accumulation_steps=config.grad_accum,
         num_train_epochs=1,
         learning_rate=config.lr,
+        warmup_ratio=config.warmup_ratio,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim="adamw_torch_fused",
+        optim="paged_adamw_8bit" if config.load_in_4bit else "adamw_torch_fused",
         max_grad_norm=config.max_grad_norm,
         logging_steps=10,
         save_strategy="no",

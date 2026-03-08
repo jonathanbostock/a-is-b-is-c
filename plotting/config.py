@@ -49,8 +49,7 @@ def resolve_topologies(config: dict[str, Any]) -> tuple[list[Edge], list[Edge] |
 
         if "eval_p" in config:
             eval_p = float(config["eval_p"])
-            effective_eval_p = min(eval_p, 1.0 - train_p)
-            n_eval = int(effective_eval_p * total)
+            n_eval = min(int(eval_p * total), total - n_train)
             topology_eval: list[Edge] | None = all_edges[total - n_eval :] if n_eval > 0 else []
         else:
             topology_eval = None
