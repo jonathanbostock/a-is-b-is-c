@@ -1,82 +1,30 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from dataclasses import asdict, dataclass
 import importlib
-import json
-import math
 import random
-from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from .categories import CATEGORY_POOL
-from .dataset import Edge, PromptExample
+from .dataset import PromptExample
+from shared.eval_types import EvalExample, StepEvalResult
+from shared.evaluate import collect_residuals, evaluate_examples, residual_layer_idx
+from shared.io import append_eval_result, append_residual_step, read_eval_results
+
+__all__ = [
+    "append_eval_result",
+    "append_residual_step",
+    "read_eval_results",
+    "residual_layer_idx",
+    "evaluate_step",
+    "collect_residuals_per_edge_group",
+]
 
 
-@dataclass(slots=True)
-class EdgeEvalResult:
-    edge: list[int]
-    n_examples: int
-    mean_logprob_correct: float
-    mean_logprob_random: float
-    log_odds_gap: float
+# ── Convert PromptExamples → EvalExamples ────────────────────────────────────
 
-
-@dataclass(slots=True)
-class StepEvalResult:
-    repeat_id: int
-    step: int
-    train_edges: list[EdgeEvalResult]
-    test_edges: list[EdgeEvalResult]
-
-
-def _log_softmax(values: list[float]) -> list[float]:
-    max_value = max(values)
-    shifted = [value - max_value for value in values]
-    exp_values = [math.exp(value) for value in shifted]
-    total = sum(exp_values)
-    return [value - math.log(total) for value in exp_values]
-
-
-def _completion_logprob(
-    *,
-    model: Any,
-    tokenizer: Any,
-    prompt: str,
-    completion: str,
-) -> float:
-    torch = importlib.import_module("torch")
-
-    full_text = f"{prompt} {completion}".strip()
-    full_ids = tokenizer(full_text, add_special_tokens=False, return_tensors="pt")["input_ids"]
-    completion_ids = tokenizer(f" {completion}", add_special_tokens=False, return_tensors="pt")["input_ids"]
-
-    if full_ids.shape[1] < completion_ids.shape[1]:
-        msg = "Completion tokenization failed due to mismatched token counts."
-        raise ValueError(msg)
-
-    with torch.no_grad():
-        outputs = model(input_ids=full_ids.to(model.device))
-        logits = outputs.logits[:, :-1, :]
-        target_ids = full_ids[:, 1:].to(model.device)
-
-    completion_token_count = completion_ids.shape[1]
-    start_index = target_ids.shape[1] - completion_token_count
-    if start_index < 0:
-        msg = "Completion start index is negative."
-        raise ValueError(msg)
-
-    completion_logits = logits[:, start_index:, :].squeeze(0)
-    completion_targets = target_ids[:, start_index:].squeeze(0)
-
-    log_probs = torch.log_softmax(completion_logits, dim=-1)
-    selected = log_probs.gather(1, completion_targets.unsqueeze(-1)).squeeze(-1)
-    return float(selected.sum().item())
-
-
-def _random_negative_for_category(
+def _sample_negatives(
     *, category: str, correct_completion: str, rng: random.Random, n_negatives: int
 ) -> list[str]:
     options = [item for item in CATEGORY_POOL[category] if item != correct_completion]
@@ -85,61 +33,94 @@ def _random_negative_for_category(
     return [rng.choice(options) for _ in range(n_negatives)]
 
 
-def evaluate_examples(
-    *,
-    model: Any,
-    tokenizer: Any,
+def _to_eval_examples(
     examples: list[PromptExample],
-    step: int,
-    n_negative_samples: int,
+    tokenizer: Any,
     rng: random.Random,
-) -> list[EdgeEvalResult]:
-    per_edge_correct: dict[tuple[int, int], list[float]] = defaultdict(list)
-    per_edge_random: dict[tuple[int, int], list[float]] = defaultdict(list)
-
-    for example in examples:
-        logprob_correct = _completion_logprob(
-            model=model,
-            tokenizer=tokenizer,
-            prompt=example.prompt,
-            completion=example.completion,
-        )
-
-        negative_completions = _random_negative_for_category(
-            category=example.target_category,
-            correct_completion=example.completion,
+    n_negatives: int,
+) -> list[EvalExample]:
+    """Tokenize PromptExamples into EvalExamples with pre-tokenized negatives."""
+    result = []
+    for ex in examples:
+        prompt_ids = tokenizer(ex.prompt, add_special_tokens=False)["input_ids"]
+        correct_ids = tokenizer(f" {ex.completion}", add_special_tokens=False)["input_ids"]
+        negative_strings = _sample_negatives(
+            category=ex.target_category,
+            correct_completion=ex.completion,
             rng=rng,
-            n_negatives=n_negative_samples,
+            n_negatives=n_negatives,
         )
-        negative_scores = [
-            _completion_logprob(model=model, tokenizer=tokenizer, prompt=example.prompt, completion=negative)
-            for negative in negative_completions
+        negative_ids = [
+            tokenizer(f" {neg}", add_special_tokens=False)["input_ids"]
+            for neg in negative_strings
         ]
-        logprob_random = sum(negative_scores) / len(negative_scores)
+        result.append(EvalExample(
+            edge=ex.edge,
+            group=ex.group,
+            prompt_ids=prompt_ids,
+            correct_ids=correct_ids,
+            negative_ids=negative_ids,
+        ))
+    return result
 
-        per_edge_correct[example.edge].append(logprob_correct)
-        per_edge_random[example.edge].append(logprob_random)
 
-    results: list[EdgeEvalResult] = []
-    for edge in sorted(per_edge_correct):
-        correct_values = per_edge_correct[edge]
-        random_values = per_edge_random[edge]
-        mean_correct = sum(correct_values) / len(correct_values)
-        mean_random = sum(random_values) / len(random_values)
-        gap_values = [correct - random for correct, random in zip(correct_values, random_values, strict=True)]
-        gap = sum(gap_values) / len(gap_values)
+# ── compute_logprob_batch for LLMs ───────────────────────────────────────────
 
-        results.append(
-            EdgeEvalResult(
-                edge=[edge[0], edge[1]],
-                n_examples=len(correct_values),
-                mean_logprob_correct=mean_correct,
-                mean_logprob_random=mean_random,
-                log_odds_gap=gap,
-            )
-        )
-    return results
+def _make_compute_logprob_batch(model: Any, tokenizer: Any) -> Any:
+    """Return a sequential logprob function for variable-length LLM sequences.
 
+    Concatenates prompt + completion and extracts the sum of log-probs over
+    the completion tokens only.
+    """
+    torch = importlib.import_module("torch")
+
+    def compute_logprob_batch(
+        pairs: list[tuple[list[int], list[int]]]
+    ) -> list[float]:
+        results: list[float] = []
+        with torch.no_grad():
+            for prompt_ids, target_ids in pairs:
+                full_ids = prompt_ids + target_ids
+                input_tensor = torch.tensor([full_ids], dtype=torch.long, device=model.device)
+                outputs = model(input_ids=input_tensor)
+                # logits[i] predicts token[i+1]
+                logits = outputs.logits[:, :-1, :]
+                target_tensor = torch.tensor([full_ids[1:]], dtype=torch.long, device=model.device)
+                log_probs = torch.log_softmax(logits, dim=-1)
+                selected = log_probs.gather(2, target_tensor.unsqueeze(-1)).squeeze(-1)
+                # Sum over the completion tokens only
+                n_completion = len(target_ids)
+                completion_lp = float(selected[:, -n_completion:].sum().item())
+                results.append(completion_lp)
+        return results
+
+    return compute_logprob_batch
+
+
+# ── compute_residual_batch for LLMs ──────────────────────────────────────────
+
+def _make_compute_residual_batch(model: Any, tokenizer: Any, layer_idx: int) -> Any:
+    """Return a sequential residual function for LLMs.
+
+    Uses output_hidden_states=True. hidden_states[0] is the embedding output,
+    hidden_states[i+1] is the output after transformer layer i.
+    """
+    torch = importlib.import_module("torch")
+
+    def compute_residual_batch(all_prompt_ids: list[list[int]]) -> list[np.ndarray]:
+        results: list[np.ndarray] = []
+        with torch.no_grad():
+            for prompt_ids in all_prompt_ids:
+                input_tensor = torch.tensor([prompt_ids], dtype=torch.long, device=model.device)
+                outputs = model(input_ids=input_tensor, output_hidden_states=True)
+                hidden = outputs.hidden_states[layer_idx + 1]  # (1, seq_len, d_model)
+                results.append(hidden[0, -1, :].float().cpu().numpy())
+        return results
+
+    return compute_residual_batch
+
+
+# ── Public evaluation functions ───────────────────────────────────────────────
 
 def evaluate_step(
     *,
@@ -153,65 +134,15 @@ def evaluate_step(
     n_negative_samples: int = 3,
 ) -> StepEvalResult:
     rng = random.Random(seed + step)
-    train_edges = evaluate_examples(
-        model=model,
-        tokenizer=tokenizer,
-        examples=eval_train_examples,
-        step=step,
-        n_negative_samples=n_negative_samples,
-        rng=rng,
-    )
-    test_edges = evaluate_examples(
-        model=model,
-        tokenizer=tokenizer,
-        examples=eval_test_examples,
-        step=step,
-        n_negative_samples=n_negative_samples,
-        rng=rng,
-    )
+    compute_logprob = _make_compute_logprob_batch(model, tokenizer)
+
+    train_eval = _to_eval_examples(eval_train_examples, tokenizer, rng, n_negative_samples)
+    test_eval = _to_eval_examples(eval_test_examples, tokenizer, rng, n_negative_samples)
+
+    train_edges = evaluate_examples(train_eval, compute_logprob)
+    test_edges = evaluate_examples(test_eval, compute_logprob)
+
     return StepEvalResult(repeat_id=repeat_id, step=step, train_edges=train_edges, test_edges=test_edges)
-
-
-def append_eval_result(output_file: Path, result: StepEvalResult) -> None:
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    if output_file.exists():
-        existing = json.loads(output_file.read_text(encoding="utf-8"))
-    else:
-        existing = []
-    existing.append(asdict(result))
-    output_file.write_text(json.dumps(existing, indent=2), encoding="utf-8")
-
-
-def read_eval_results(output_file: Path) -> list[dict[str, Any]]:
-    if not output_file.exists():
-        return []
-    return json.loads(output_file.read_text(encoding="utf-8"))
-
-
-def residual_layer_idx(n_layers: int) -> int:
-    """Return the layer index closest to 3/4 of the way through the network."""
-    return max(0, round(n_layers * 3 / 4) - 1)
-
-
-def _get_residual_for_prompt(
-    *,
-    model: Any,
-    tokenizer: Any,
-    prompt: str,
-    layer_idx: int,
-) -> np.ndarray:
-    """Tokenize prompt and return the residual at layer_idx on the last token.
-
-    Uses output_hidden_states=True. hidden_states[0] is the embedding output,
-    hidden_states[i+1] is the output after transformer layer i.
-    """
-    torch = importlib.import_module("torch")
-    input_ids = tokenizer(prompt, add_special_tokens=False, return_tensors="pt")["input_ids"]
-    input_ids = input_ids.to(model.device)
-    with torch.no_grad():
-        outputs = model(input_ids=input_ids, output_hidden_states=True)
-    hidden = outputs.hidden_states[layer_idx + 1]  # (1, seq_len, d_model)
-    return hidden[0, -1, :].float().cpu().numpy()
 
 
 def collect_residuals_per_edge_group(
@@ -220,57 +151,9 @@ def collect_residuals_per_edge_group(
     tokenizer: Any,
     examples: list[PromptExample],
     layer_idx: int,
-) -> list[dict[str, Any]]:
-    """For each (edge, group) pair, compute the mean residual over all templates.
-
-    Returns a list of dicts with keys: edge, group, residual.
-    """
-    sums: dict[tuple[Edge, int], np.ndarray] = {}
-    counts: dict[tuple[Edge, int], int] = defaultdict(int)
-
-    for example in examples:
-        key = (example.edge, example.group)
-        vec = _get_residual_for_prompt(
-            model=model,
-            tokenizer=tokenizer,
-            prompt=example.prompt,
-            layer_idx=layer_idx,
-        )
-        if key in sums:
-            sums[key] += vec
-        else:
-            sums[key] = vec.copy()
-        counts[key] += 1
-
-    return [
-        {
-            "edge": list(edge),
-            "group": group,
-            "residual": (sums[(edge, group)] / counts[(edge, group)]).tolist(),
-        }
-        for edge, group in sorted(sums.keys())
-    ]
-
-
-def append_residual_step(
-    output_file: Path,
-    *,
-    step: int,
-    repeat_id: int,
-    layer_idx: int,
-    train_residuals: list[dict[str, Any]],
-    test_residuals: list[dict[str, Any]],
-) -> None:
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    if output_file.exists():
-        existing: list[dict[str, Any]] = json.loads(output_file.read_text(encoding="utf-8"))
-    else:
-        existing = []
-    existing.append({
-        "step": step,
-        "repeat_id": repeat_id,
-        "layer_idx": layer_idx,
-        "train_residuals": train_residuals,
-        "test_residuals": test_residuals,
-    })
-    output_file.write_text(json.dumps(existing, indent=2), encoding="utf-8")
+) -> list[dict]:
+    """For each (edge, group) pair, compute the mean residual over all templates."""
+    rng = random.Random(0)  # negatives not used for residuals, rng is just for interface compatibility
+    eval_examples = _to_eval_examples(examples, tokenizer, rng, n_negatives=1)
+    compute_residual = _make_compute_residual_batch(model, tokenizer, layer_idx)
+    return collect_residuals(eval_examples, compute_residual)

@@ -39,5 +39,5 @@ requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["pretrained_llms*", "toy_models*", "plotting*"]
+include = ["pretrained_llms*", "toy_models*", "plotting*", "shared*"]
 exclude = ["runs*"]

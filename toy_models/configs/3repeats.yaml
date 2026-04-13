@@ -6,8 +6,8 @@ n_layers: 1
 lr: 0.001
 weight_decay: 0.1
 batch_size: 64
-num_steps: 10000
+num_steps: 100000
 eval_every: 100
-num_repeats: 1
+num_repeats: 3
 seed: 42
 output_dir: ./runs/toy_demo

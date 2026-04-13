@@ -27,4 +27,5 @@ unsloth_compiled_cache/
 # Experiment outputs
 runs/checkpoints/
 runs/residuals/
+*.json
 

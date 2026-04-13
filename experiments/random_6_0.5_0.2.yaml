@@ -2,4 +2,5 @@ train_p: 0.5
 eval_p: 0.2
 n_categories: 6
 k: 8
+num_repeats: 3
 output_dir: ./runs/random_6_0.5_0.2

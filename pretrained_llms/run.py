@@ -7,10 +7,9 @@ from typing import Any
 import json
 
 from .dataset import Edge, PromptExample, build_run_data, write_examples_jsonl, write_metadata
-from .plot import plot_topology_results
+from .plot import plot_accuracy_results, plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
 from plotting.config import merge_config, resolve_topologies, timestamped_output_dir
-from plotting.pca_plot import plot_residual_pca
 
 _DEFAULT_CONFIG = Path(__file__).parent / "default_config.yaml"
 _CONFIGS_DIR = Path(__file__).parent / "configs"
@@ -114,16 +113,21 @@ def main() -> None:
                 run_dir=output_dir,
             )
 
+        residuals_file = output_dir / "residuals" / "pca_residuals.json"
         plot_topology_results(
             eval_results_file=output_dir / "eval_results.json",
             output_dir=output_dir,
             n_categories=int(config["n_categories"]),
             topology_train=topology_train,
+            residuals_file=residuals_file,
         )
-        plot_residual_pca(
-            residuals_file=output_dir / "residuals" / "pca_residuals.json",
+        plot_accuracy_results(
+            eval_results_file=output_dir / "eval_results.json",
             output_dir=output_dir,
+            n_categories=int(config["n_categories"]),
+            topology_train=topology_train,
             k=int(config["k"]),
+            residuals_file=residuals_file,
         )
 
 

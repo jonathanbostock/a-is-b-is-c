@@ -8,6 +8,8 @@ from pathlib import Path
 import random
 from typing import Any
 
+from datasets import Dataset
+
 from .dataset import Edge, PromptExample
 from .evaluate import (
     append_eval_result,
@@ -89,7 +91,7 @@ def _build_randomized_training_dataset(
     batch_size: int,
     grad_accum: int,
     seed: int,
-) -> Any:
+) -> Dataset:
     if not examples:
         msg = "No training examples were provided for this repeat."
         raise ValueError(msg)
@@ -107,26 +109,22 @@ def _build_randomized_training_dataset(
     samples_per_step = batch_size * grad_accum
     total_samples = max_steps * samples_per_step
 
-    torch = importlib.import_module("torch")
+    rng = random.Random(seed)
+    rows: list[dict[str, Any]] = []
+    for _ in range(total_samples):
+        edge = rng.choice(edges)
+        template = rng.choice(templates_by_edge[edge])
+        selected = rng.choice(grouped[edge][template])
+        rows.append(
+            _build_label_masked_record(
+                tokenizer=tokenizer,
+                prompt=selected.prompt,
+                completion=selected.completion,
+                max_seq_length=max_seq_length,
+            )
+        )
 
-    class _RandomizedDataset(torch.utils.data.IterableDataset):
-        def __len__(self) -> int:
-            return total_samples
-
-        def __iter__(self):
-            rng = random.Random(seed)
-            for _ in range(total_samples):
-                edge = rng.choice(edges)
-                template = rng.choice(templates_by_edge[edge])
-                selected = rng.choice(grouped[edge][template])
-                yield _build_label_masked_record(
-                    tokenizer=tokenizer,
-                    prompt=selected.prompt,
-                    completion=selected.completion,
-                    max_seq_length=max_seq_length,
-                )
-
-    return _RandomizedDataset()
+    return Dataset.from_list(rows)
 
 
 def run_single_repeat_training(
