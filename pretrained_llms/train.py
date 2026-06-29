@@ -52,6 +52,11 @@ class TrainingConfig:
     output_dir: str = "./runs"
     model_name: str = "google/gemma-3-1b-pt"
     max_seq_length: int = 256
+    gradient_checkpointing: bool = True
+    attn_implementation: str = "eager"
+    dense_early_evals: bool = True
+    collect_residuals: bool = True
+    eval_subsample: int = 0  # 0 means no subsample
 
 
 def _build_label_masked_record(*, tokenizer: Any, prompt: str, completion: str, max_seq_length: int) -> dict[str, Any]:
@@ -109,20 +114,32 @@ def _build_randomized_training_dataset(
     samples_per_step = batch_size * grad_accum
     total_samples = max_steps * samples_per_step
 
+    # Tokenize unique examples once; sampling thereafter is a list lookup.
+    unique_cache: dict[int, dict[str, Any]] = {}
+    def _tokenized_for(example: PromptExample) -> dict[str, Any]:
+        key = id(example)
+        if key not in unique_cache:
+            unique_cache[key] = _build_label_masked_record(
+                tokenizer=tokenizer,
+                prompt=example.prompt,
+                completion=example.completion,
+                max_seq_length=max_seq_length,
+            )
+        return unique_cache[key]
+
+    # Pre-tokenize all unique examples up front for fast lookup.
+    for by_template in grouped.values():
+        for example_list in by_template.values():
+            for example in example_list:
+                _tokenized_for(example)
+
     rng = random.Random(seed)
     rows: list[dict[str, Any]] = []
     for _ in range(total_samples):
         edge = rng.choice(edges)
         template = rng.choice(templates_by_edge[edge])
         selected = rng.choice(grouped[edge][template])
-        rows.append(
-            _build_label_masked_record(
-                tokenizer=tokenizer,
-                prompt=selected.prompt,
-                completion=selected.completion,
-                max_seq_length=max_seq_length,
-            )
-        )
+        rows.append(_tokenized_for(selected))
 
     return Dataset.from_list(rows)
 
@@ -170,22 +187,32 @@ def run_single_repeat_training(
             eval_every: int,
             max_steps: int,
             layer_idx: int,
+            dense_early_evals: bool,
+            collect_residuals: bool,
+            eval_subsample: int,
         ) -> None:
             self.eval_file = eval_file
             self.residuals_file = residuals_file
             self.tokenizer = tokenizer
+            self.collect_residuals_flag = collect_residuals
+            if eval_subsample > 0:
+                ss_rng = random.Random(seed + 7777)
+                if len(eval_train_examples) > eval_subsample:
+                    eval_train_examples = ss_rng.sample(eval_train_examples, eval_subsample)
+                if len(eval_test_examples) > eval_subsample:
+                    eval_test_examples = ss_rng.sample(eval_test_examples, eval_subsample)
             self.eval_train_examples = eval_train_examples
             self.eval_test_examples = eval_test_examples
             self.residual_train_examples = residual_train_examples
             self.seed = seed
             self.layer_idx = layer_idx
-            # Dense early evals (powers of 2) plus regular eval_every steps
             self.eval_steps: set[int] = set(range(eval_every, max_steps + 1, eval_every))
             self.eval_steps.add(max_steps)
-            p = 1
-            while p < eval_every:
-                self.eval_steps.add(min(p, max_steps))
-                p *= 2
+            if dense_early_evals:
+                p = 1
+                while p < eval_every:
+                    self.eval_steps.add(min(p, max_steps))
+                    p *= 2
 
         def on_step_end(self, args: Any, state: Any, control: Any, **kwargs: Any) -> Any:
             step = int(state.global_step)
@@ -204,28 +231,30 @@ def run_single_repeat_training(
                 eval_test_examples=self.eval_test_examples,
                 seed=self.seed,
             )
-            train_residuals = collect_residuals_per_edge_group(
-                model=model,
-                tokenizer=self.tokenizer,
-                examples=self.residual_train_examples,
-                layer_idx=self.layer_idx,
-            )
-            test_residuals = collect_residuals_per_edge_group(
-                model=model,
-                tokenizer=self.tokenizer,
-                examples=self.eval_test_examples,
-                layer_idx=self.layer_idx,
-            )
+            if self.collect_residuals_flag:
+                train_residuals = collect_residuals_per_edge_group(
+                    model=model,
+                    tokenizer=self.tokenizer,
+                    examples=self.residual_train_examples,
+                    layer_idx=self.layer_idx,
+                )
+                test_residuals = collect_residuals_per_edge_group(
+                    model=model,
+                    tokenizer=self.tokenizer,
+                    examples=self.eval_test_examples,
+                    layer_idx=self.layer_idx,
+                )
             model.train()
             append_eval_result(self.eval_file, result)
-            append_residual_step(
-                self.residuals_file,
-                step=step,
-                repeat_id=repeat_id,
-                layer_idx=self.layer_idx,
-                train_residuals=train_residuals,
-                test_residuals=test_residuals,
-            )
+            if self.collect_residuals_flag:
+                append_residual_step(
+                    self.residuals_file,
+                    step=step,
+                    repeat_id=repeat_id,
+                    layer_idx=self.layer_idx,
+                    train_residuals=train_residuals,
+                    test_residuals=test_residuals,
+                )
             return control
 
     residuals_dir = run_dir / "residuals"
@@ -247,15 +276,16 @@ def run_single_repeat_training(
             )
             model = _load_model(
                 quantization_config=bnb_config,
-                attn_implementation="eager",
+                attn_implementation=config.attn_implementation,
                 dtype=torch.bfloat16,
             )
         else:
             model = _load_model(
-                attn_implementation="eager",
+                attn_implementation=config.attn_implementation,
                 dtype=torch.bfloat16,
             )
-        model.enable_input_require_grads()
+        if config.gradient_checkpointing:
+            model.enable_input_require_grads()
         _default_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         lora_config = LoraConfig(
             r=config.lora_r,
@@ -268,7 +298,7 @@ def run_single_repeat_training(
         model = get_peft_model(model, lora_config)
     else:
         model = _load_model(
-            attn_implementation="eager",
+            attn_implementation=config.attn_implementation,
             dtype=torch.bfloat16,
         )
 
@@ -312,8 +342,8 @@ def run_single_repeat_training(
         save_strategy="no",
         seed=config.seed + repeat_id,
         report_to="none",
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
+        gradient_checkpointing=config.gradient_checkpointing,
+        gradient_checkpointing_kwargs={"use_reentrant": False} if config.gradient_checkpointing else None,
         bf16=True,
         tf32=True,
     )
@@ -332,6 +362,9 @@ def run_single_repeat_training(
         eval_every=config.eval_every,
         max_steps=config.max_steps,
         layer_idx=layer_idx,
+        dense_early_evals=config.dense_early_evals,
+        collect_residuals=config.collect_residuals,
+        eval_subsample=config.eval_subsample,
     )
 
     trainer = Trainer(
@@ -352,27 +385,29 @@ def run_single_repeat_training(
         eval_test_examples=repeat_eval_test_examples,
         seed=repeat_seed,
     )
-    initial_train_residuals = collect_residuals_per_edge_group(
-        model=trainer.model,
-        tokenizer=tokenizer,
-        examples=residual_train_examples,
-        layer_idx=layer_idx,
-    )
-    initial_test_residuals = collect_residuals_per_edge_group(
-        model=trainer.model,
-        tokenizer=tokenizer,
-        examples=repeat_eval_test_examples,
-        layer_idx=layer_idx,
-    )
+    if config.collect_residuals:
+        initial_train_residuals = collect_residuals_per_edge_group(
+            model=trainer.model,
+            tokenizer=tokenizer,
+            examples=residual_train_examples,
+            layer_idx=layer_idx,
+        )
+        initial_test_residuals = collect_residuals_per_edge_group(
+            model=trainer.model,
+            tokenizer=tokenizer,
+            examples=repeat_eval_test_examples,
+            layer_idx=layer_idx,
+        )
     trainer.model.train()
     append_eval_result(eval_file, initial_result)
-    append_residual_step(
-        residuals_file,
-        step=0,
-        repeat_id=repeat_id,
-        layer_idx=layer_idx,
-        train_residuals=initial_train_residuals,
-        test_residuals=initial_test_residuals,
-    )
+    if config.collect_residuals:
+        append_residual_step(
+            residuals_file,
+            step=0,
+            repeat_id=repeat_id,
+            layer_idx=layer_idx,
+            train_residuals=initial_train_residuals,
+            test_residuals=initial_test_residuals,
+        )
 
     trainer.train()

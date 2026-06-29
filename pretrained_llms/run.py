@@ -7,6 +7,7 @@ from typing import Any
 import json
 
 from .dataset import Edge, PromptExample, build_run_data, write_examples_jsonl, write_metadata
+from .synthetic_dataset import build_synthetic_run_data
 from .plot import plot_accuracy_results, plot_topology_results
 from .train import TrainingConfig, run_single_repeat_training
 from plotting.config import merge_config, resolve_topologies, timestamped_output_dir
@@ -53,16 +54,35 @@ def main() -> None:
 
     topology_train, topology_eval = resolve_topologies(config)
 
-    run_data = build_run_data(
-        n_repeats=int(config["n_repeats"]),
-        n_categories=int(config["n_categories"]),
-        k=int(config["k"]),
-        topology_train=topology_train,
-        topology_eval=topology_eval,
-        n_train_templates=int(config["n_train_templates"]),
-        n_eval_templates=int(config["n_eval_templates"]),
-        seed=int(config["seed"]),
-    )
+    dataset_type = str(config.get("dataset_type", "templates"))
+    if dataset_type == "synthetic_docs":
+        cache_root = Path(config.get("synthetic_doc_cache", output_dir / "synthetic_docs")).expanduser().resolve()
+        cache_root.mkdir(parents=True, exist_ok=True)
+        run_data = build_synthetic_run_data(
+            n_repeats=int(config["n_repeats"]),
+            n_categories=int(config["n_categories"]),
+            k=int(config["k"]),
+            topology_train=topology_train,
+            topology_eval=topology_eval,
+            n_train_templates=int(config["n_train_templates"]),
+            n_eval_templates=int(config["n_eval_templates"]),
+            docs_per_pair=int(config.get("docs_per_pair", 8)),
+            seed=int(config["seed"]),
+            cache_root=cache_root,
+            openai_model=str(config.get("openai_model", "gpt-4.1-mini")),
+            openai_concurrency=int(config.get("openai_concurrency", 16)),
+        )
+    else:
+        run_data = build_run_data(
+            n_repeats=int(config["n_repeats"]),
+            n_categories=int(config["n_categories"]),
+            k=int(config["k"]),
+            topology_train=topology_train,
+            topology_eval=topology_eval,
+            n_train_templates=int(config["n_train_templates"]),
+            n_eval_templates=int(config["n_eval_templates"]),
+            seed=int(config["seed"]),
+        )
 
     write_metadata(run_data.metadata, output_dir / "topology_metadata.json")
     run_config_path = output_dir / "run_config_metadata.json"
@@ -101,6 +121,11 @@ def main() -> None:
             output_dir=str(output_dir),
             model_name=str(config["model_name"]),
             max_seq_length=int(config["max_seq_length"]),
+            gradient_checkpointing=bool(config.get("gradient_checkpointing", True)),
+            attn_implementation=str(config.get("attn_implementation", "eager")),
+            dense_early_evals=bool(config.get("dense_early_evals", True)),
+            collect_residuals=bool(config.get("collect_residuals", True)),
+            eval_subsample=int(config.get("eval_subsample", 0)),
         )
 
         for repeat_id in range(int(config["n_repeats"])):
