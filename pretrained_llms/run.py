@@ -126,6 +126,13 @@ def main() -> None:
             dense_early_evals=bool(config.get("dense_early_evals", True)),
             collect_residuals=bool(config.get("collect_residuals", True)),
             eval_subsample=int(config.get("eval_subsample", 0)),
+            lora_alpha=int(config.get("lora_alpha", 16)),
+            lora_dropout=float(config.get("lora_dropout", 0.0)),
+            weight_decay=float(config.get("weight_decay", 0.0)),
+            l2_sp_lambda=float(config.get("l2_sp_lambda", 0.0)),
+            mixin_jsonl=(str(config["mixin_jsonl"]) if config.get("mixin_jsonl") else None),
+            mixin_ratio=float(config.get("mixin_ratio", 0.0)),
+            paged_adamw_8bit=bool(config.get("paged_adamw_8bit", False)),
         )
 
         for repeat_id in range(int(config["n_repeats"])):

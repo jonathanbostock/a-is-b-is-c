@@ -57,6 +57,14 @@ class TrainingConfig:
     dense_early_evals: bool = True
     collect_residuals: bool = True
     eval_subsample: int = 0  # 0 means no subsample
+    lora_alpha: int = 16
+    lora_dropout: float = 0.0
+    weight_decay: float = 0.0
+    l2_sp_lambda: float = 0.0
+    mixin_jsonl: str | None = None
+    mixin_ratio: float = 0.0
+    layer_lr_decay: float = 1.0  # multiplicative factor applied to the LR of layer n-1 vs layer n; 1.0 = uniform
+    paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
 
 
 def _build_label_masked_record(*, tokenizer: Any, prompt: str, completion: str, max_seq_length: int) -> dict[str, Any]:
@@ -87,6 +95,31 @@ def _build_label_masked_record(*, tokenizer: Any, prompt: str, completion: str, 
     }
 
 
+def _load_mixin_records(
+    *, mixin_jsonl: str, tokenizer: Any, max_seq_length: int
+) -> list[dict[str, Any]]:
+    """Pre-tokenize a JSONL mixin file. Each line: {'text': '...'}.
+    Loss runs over the full text (LM-loss; no prompt mask). Returns a list of
+    {input_ids, attention_mask, labels} dicts ready for the collator."""
+    import json as _json
+    rows: list[dict[str, Any]] = []
+    from pathlib import Path as _Path
+    for line in _Path(mixin_jsonl).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line: continue
+        obj = _json.loads(line)
+        text = obj.get("text", "")
+        if not text: continue
+        enc = tokenizer(text, truncation=True, max_length=max_seq_length, add_special_tokens=True)
+        ids = enc["input_ids"]
+        rows.append({
+            "input_ids": ids,
+            "attention_mask": enc["attention_mask"],
+            "labels": list(ids),
+        })
+    return rows
+
+
 def _build_randomized_training_dataset(
     *,
     examples: list[PromptExample],
@@ -96,6 +129,8 @@ def _build_randomized_training_dataset(
     batch_size: int,
     grad_accum: int,
     seed: int,
+    mixin_jsonl: str | None = None,
+    mixin_ratio: float = 0.0,
 ) -> Dataset:
     if not examples:
         msg = "No training examples were provided for this repeat."
@@ -134,12 +169,23 @@ def _build_randomized_training_dataset(
                 _tokenized_for(example)
 
     rng = random.Random(seed)
+    mixin_rows: list[dict[str, Any]] = []
+    if mixin_jsonl and mixin_ratio > 0:
+        mixin_rows = _load_mixin_records(
+            mixin_jsonl=mixin_jsonl, tokenizer=tokenizer, max_seq_length=max_seq_length
+        )
+        if not mixin_rows:
+            mixin_ratio = 0.0  # silently fall back if file is empty
+
     rows: list[dict[str, Any]] = []
     for _ in range(total_samples):
-        edge = rng.choice(edges)
-        template = rng.choice(templates_by_edge[edge])
-        selected = rng.choice(grouped[edge][template])
-        rows.append(_tokenized_for(selected))
+        if mixin_rows and rng.random() < mixin_ratio:
+            rows.append(rng.choice(mixin_rows))
+        else:
+            edge = rng.choice(edges)
+            template = rng.choice(templates_by_edge[edge])
+            selected = rng.choice(grouped[edge][template])
+            rows.append(_tokenized_for(selected))
 
     return Dataset.from_list(rows)
 
@@ -289,9 +335,9 @@ def run_single_repeat_training(
         _default_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         lora_config = LoraConfig(
             r=config.lora_r,
-            lora_alpha=16,
+            lora_alpha=config.lora_alpha,
             target_modules=config.lora_target_modules or _default_lora_modules,
-            lora_dropout=0.0,
+            lora_dropout=config.lora_dropout,
             bias="none",
             task_type=TaskType.CAUSAL_LM,
         )
@@ -325,6 +371,8 @@ def run_single_repeat_training(
         batch_size=config.batch_size,
         grad_accum=config.grad_accum,
         seed=config.seed + repeat_id,
+        mixin_jsonl=config.mixin_jsonl,
+        mixin_ratio=config.mixin_ratio,
     )
 
     training_args = TrainingArguments(
@@ -336,8 +384,9 @@ def run_single_repeat_training(
         warmup_ratio=config.warmup_ratio,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim="paged_adamw_8bit" if config.load_in_4bit else "adamw_torch_fused",
+        optim="paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused",
         max_grad_norm=config.max_grad_norm,
+        weight_decay=config.weight_decay,
         logging_steps=10,
         save_strategy="no",
         seed=config.seed + repeat_id,
@@ -367,7 +416,12 @@ def run_single_repeat_training(
         eval_subsample=config.eval_subsample,
     )
 
-    trainer = Trainer(
+    trainer_cls = Trainer
+    if config.l2_sp_lambda > 0:
+        from .regularizers import make_l2sp_trainer
+        trainer_cls = make_l2sp_trainer(base_trainer_cls=Trainer, l2_sp_lambda=config.l2_sp_lambda)
+
+    trainer = trainer_cls(
         model=model,
         train_dataset=train_dataset,
         args=training_args,
