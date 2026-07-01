@@ -16,12 +16,15 @@ pip install --break-system-packages \
 
 # aligne (decisiveness panel). Cloned alongside the repo on the pod, or installed
 # from the arcadia-impact remote. The scorer imports aligne.metrics.preferences.
-if [ -d /workspace/aligne ]; then
-  pip install --break-system-packages -e /workspace/aligne 2>&1 | tail -2
-elif [ -d ../aligne ]; then
-  pip install --break-system-packages -e ../aligne 2>&1 | tail -2
+# aligne is a private ArcadiaImpact repo — clone with the pod's GH_TOKEN, then pip-install.
+if python3 -c "import aligne" 2>/dev/null; then
+  echo "[setup.sh] aligne already importable"
+elif [ -n "${GH_TOKEN:-}" ]; then
+  rm -rf /workspace/aligne
+  git clone "https://x-access-token:${GH_TOKEN}@github.com/ArcadiaImpact/aligne.git" /workspace/aligne 2>&1 | tail -2 \
+    && pip install --break-system-packages -e /workspace/aligne 2>&1 | tail -2 \
+    || echo "WARN: aligne clone/install failed — decisiveness eval will fail."
 else
-  pip install --break-system-packages "git+https://github.com/ArcadiaImpact/aligne.git" 2>&1 | tail -2 || \
-    echo "WARN: aligne not installed — decisiveness eval will fail. Ensure aligne is available on the pod."
+  echo "WARN: no GH_TOKEN — cannot clone private aligne repo. Decisiveness eval will fail."
 fi
 echo "[setup.sh] done"

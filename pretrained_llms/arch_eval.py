@@ -120,11 +120,11 @@ def main() -> None:
         cfg = {
             "model_name": canary_model, "max_seq_length": 128,
             "n_repeats": 1, "n_train_templates": 8, "n_eval_templates": 4,
-            "num_steps": 1, "eval_every": 1, "skip_train": True,
+            "num_steps": 1, "eval_every": 1, "use_lora": True, "lora_r": 8,
             "seed": int(heldout["seed"]), "train_p": float(heldout.get("train_p", 0.6)),
             "eval_p": float(heldout.get("eval_p", 0.2)), "k": int(heldout.get("k", 8)),
             "n_categories": 6,
-            "chat_format": True, "use_lora": False, "collect_residuals": False,
+            "chat_format": True, "collect_residuals": False,
             "dense_early_evals": False, "eval_subsample": 64,
             "output_dir": str(work / "control"),
         }

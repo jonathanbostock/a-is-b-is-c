@@ -168,7 +168,7 @@ if [ -d "crystallize-no-cook" ]; then cd "crystallize-no-cook"; echo "cd into ta
 # head. Pathspecs resolve relative to cwd (the task dir), matching how
 # trusted_paths is written in .arch/config.toml.
 git fetch origin "arch/crystallize-no-cook" --depth=1 2>/dev/null || true
-for _tp in ['.arch', 'pretrained_llms/arch_eval.py', 'pretrained_llms/evaluate.py', 'pretrained_llms/aligne_local.py']; do
+for _tp in .arch pretrained_llms/arch_eval.py pretrained_llms/evaluate.py pretrained_llms/aligne_local.py; do
   if git checkout "origin/arch/crystallize-no-cook" -- "$_tp" 2>/dev/null; then
     echo "restored trusted scorer path from base: $_tp"
   else
@@ -225,7 +225,7 @@ SCORE="$(jq -r '.score' "$OUT")"
 
 # Render whitelisted keys as a jq projection. `public_metrics` is an empty
 # list by default, which means: publish only the score.
-PUBLIC_JSON=$(jq -c '{score: .score, "test_acc": (.metrics["test_acc"] // null), "decisiveness": (.metrics["decisiveness"] // null), "decisiveness_retention": (.metrics["decisiveness_retention"] // null), "composable_acc": (.metrics["composable_acc"] // null), "noncomposable_acc": (.metrics["noncomposable_acc"] // null), "train_acc": (.metrics["train_acc"] // null)}' "$OUT")
+PUBLIC_JSON=$(jq -c '{score: .score, test_acc: (.metrics.test_acc // null), dr: (.metrics.decisiveness_retention // null)}' "$OUT")
 
 # Human-readable bullet list for the PR comment. Empty if no whitelist.
 PUBLIC_BULLETS=""
