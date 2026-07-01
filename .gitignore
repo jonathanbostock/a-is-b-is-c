@@ -29,3 +29,4 @@ runs/checkpoints/
 runs/residuals/
 *.json
 
+.env

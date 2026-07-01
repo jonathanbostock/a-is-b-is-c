@@ -31,18 +31,19 @@ BASE = dict(
     num_steps=2000,
     eval_every=200,
     warmup_ratio=0.03,
-    batch_size=1,
-    grad_accum=16,             # effective batch 16
+    batch_size=4,
+    grad_accum=4,              # effective batch 16, 4× fewer kernel launches than bs=1 ga=16
     seed=42,
     skip_train=False,
-    gradient_checkpointing=True,
-    attn_implementation="sdpa",
+    gradient_checkpointing=False,  # ~70GB peak with embeds frozen + paged 8bit; 178GB available
+    attn_implementation="sdpa",  # flash_attention_2 not installed; sdpa on Blackwell is fast enough
     dense_early_evals=False,
     collect_residuals=False,
     eval_subsample=64,
     use_lora=False,             # FULL PARAMETER
     lora_r=0,                   # ignored
     paged_adamw_8bit=True,      # must, to fit in 80GB
+    freeze_embeddings=True,     # Qwen vocab is 152k × 5120 = 1.6B embed params — freeze
     max_grad_norm=1.0,
 )
 
