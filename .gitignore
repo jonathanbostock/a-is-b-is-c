@@ -30,3 +30,9 @@ runs/
 *.json
 
 .env
+
+# arch2 session state (local-only)
+.arch/.session.json
+
+# arch2 public iteration data (must be committed despite *.json)
+!data/public/heldout.json

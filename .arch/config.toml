@@ -1,0 +1,58 @@
+# .arch/config.toml — written by `arch init`.
+task_name = "crystallize-no-cook"
+task_description = """
+Fine-tune Qwen2.5-14B-Instruct to acquire concept crystallization (forward-transitive
+generalization on Bostock's matching game) WITHOUT catastrophically degrading its general
+preference structure. Score = held-out test-edge accuracy x min(1, decisiveness_FT /
+decisiveness_base). Motivated by the finding that full-parameter matching-game FT cracks
+crystallization (test acc 0.79) but destroys the model (mu-decisiveness collapses from
+0.735 to ~0; the model stops answering forced-choice questions and emits only matching-game
+tokens). The fleet searches for training methods that install the concept while preserving
+the instruction-tuned model's preference structure.
+"""
+eval_shim = ".arch/eval.sh"
+public_data_root = "data/public"
+
+research_directions = [
+  """LoRA / high-rank adapters instead of full-param FT: adapters leave base weights intact, so the model's general preference structure (decisiveness) should survive while the adapter installs the matching-game associations. Directly targets the full-param catastrophic-forgetting failure.""",
+  """L2-SP (L2-to-init) regularization at higher lambda: keep fine-tuned weights close to the pretrained init to preserve world-knowledge / preference structure. The gradient-direct L2-SP is already in the repo (pretrained_llms/regularizers.py).""",
+  """General-data mixin during FT: interleave matching-game training examples with general chat/instruction data so the model does not collapse onto only matching-game outputs. Tune the mixin ratio (see mixin_jsonl / mixin_ratio in train.py).""",
+  """Early stopping at the crystallization knee: test-edge accuracy plateaus by ~step 1600 while decisiveness likely degrades monotonically with more steps. Find the step where crystallization is achieved but decisiveness is still intact.""",
+  """KL-to-base regularization (distillation-style): penalize divergence of the FT model's output distribution from the base model on general prompts, preserving decisiveness while still fitting the matching-game loss on task tokens.""",
+  """Lower LR + shorter schedule, or freeze lower layers: gentler updates that install the concept without overwriting the instruction-tuned behavior."""
+]
+
+[eval]
+# The MEASUREMENT code is trusted-restored from base so a PR can't game its own
+# scorer. Workers iterate on the METHOD (train.py, regularizers.py, configs,
+# submission/recipe.yaml) — those are scored as-submitted. arch_eval.py (scorer),
+# evaluate.py (accuracy measurement) and aligne_local.py (decisiveness measurement)
+# are trusted.
+trusted_paths = [
+  ".arch",
+  "pretrained_llms/arch_eval.py",
+  "pretrained_llms/evaluate.py",
+  "pretrained_llms/aligne_local.py",
+]
+reference_is_authoritative = false
+
+[submit]
+deny_globs = [
+  "**/*.pt", "**/*.bin", "**/*.ckpt", "**/*.safetensors",
+  "**/wandb/**", "**/outputs/**", "**/.venv/**", "**/__pycache__/**",
+  "**/*.npy", "runs/**",
+]
+
+[publish]
+public_metrics = [
+  "test_acc",
+  "decisiveness",
+  "decisiveness_retention",
+  "composable_acc",
+  "noncomposable_acc",
+  "train_acc",
+]
+
+[external_context]
+slack_threads = []
+drive_files = []

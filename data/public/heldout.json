@@ -1,0 +1,9 @@
+{
+  "_comment": "PUBLIC iteration topology. Workers develop + run `arch eval` against this. The authoritative held-out eval uses a DIFFERENT secret seed (mounted at /mnt/arch_data in CI), so a recipe that overfits this exact topology will not transfer. Same schema as the held-out spec.",
+  "seed": 1234,
+  "train_p": 0.6,
+  "eval_p": 0.2,
+  "k": 8,
+  "base_decisiveness": 0.735,
+  "base_model": "Qwen/Qwen2.5-14B-Instruct"
+}
