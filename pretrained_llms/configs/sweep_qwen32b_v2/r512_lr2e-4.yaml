@@ -1,0 +1,33 @@
+model_name: Qwen/Qwen2.5-32B
+max_seq_length: 96
+n_repeats: 1
+n_train_templates: 8
+n_eval_templates: 4
+num_steps: 2000
+eval_every: 200
+warmup_ratio: 0.1
+batch_size: 4
+grad_accum: 4
+seed: 42
+skip_train: false
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+load_in_4bit: true
+max_grad_norm: 1.0
+use_lora: true
+lora_r: 512
+lora_alpha: 1024
+lora_dropout: 0.1
+lr: 0.0002
+output_dir: ./runs/sweep_qwen32b_v2/r512_lr2e-4

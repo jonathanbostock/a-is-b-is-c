@@ -549,7 +549,18 @@ def run_single_repeat_training(
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
+            import subprocess as _sp
+            def _git(*args: str) -> str:
+                try:
+                    return _sp.check_output(["git", *args], cwd=str(Path(__file__).resolve().parent),
+                                            stderr=_sp.DEVNULL, text=True).strip()
+                except Exception:
+                    return "unknown"
+            git_sha = _git("rev-parse", "HEAD")
+            git_dirty = _git("status", "--porcelain") not in ("", "unknown")
             provenance = {
+                "git_commit": git_sha,
+                "git_dirty": git_dirty,  # True => uncommitted changes at run time (should be False!)
                 "model_name": config.model_name,
                 "max_steps": config.max_steps,
                 "lr": config.lr,

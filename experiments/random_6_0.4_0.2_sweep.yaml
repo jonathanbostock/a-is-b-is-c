@@ -1,0 +1,5 @@
+train_p: 0.4
+eval_p: 0.2
+n_categories: 6
+k: 8
+# Intentionally no output_dir — let the model config decide per-run.

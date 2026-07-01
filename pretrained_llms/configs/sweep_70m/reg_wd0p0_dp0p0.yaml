@@ -1,0 +1,30 @@
+model_name: EleutherAI/pythia-70m
+max_seq_length: 96
+n_repeats: 1
+n_train_templates: 8
+n_eval_templates: 4
+num_steps: 20000
+eval_every: 2000
+warmup_ratio: 0.01
+batch_size: 128
+grad_accum: 1
+lr: 0.0004
+seed: 42
+skip_train: false
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+lora_target_modules:
+  - query_key_value
+  - dense
+  - dense_h_to_4h
+  - dense_4h_to_h
+max_grad_norm: 1.0
+use_lora: true
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.0
+weight_decay: 0.0
+output_dir: ./runs/sweep_70m/reg_wd0p0_dp0p0

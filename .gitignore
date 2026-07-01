@@ -24,9 +24,9 @@ unsloth_compiled_cache/
 .ipynb_checkpoints/
 .DS_Store
 
-# Experiment outputs
-runs/checkpoints/
-runs/residuals/
+# Experiment outputs — full run trees are large and are mirrored to HF
+# (arcadia-impact/matching-game-scale-logs). Keep them out of git.
+runs/
 *.json
 
 .env
