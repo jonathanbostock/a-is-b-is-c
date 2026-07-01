@@ -8,7 +8,8 @@
 set -euo pipefail
 : "${ARCH_DATA_ROOT:?ARCH_DATA_ROOT must be set}"
 : "${ARCH_EVAL_OUTPUT:?ARCH_EVAL_OUTPUT must be set}"
-
-PY=".venv/bin/python"
-[ -x "$PY" ] || PY="python3"
-"$PY" -m pretrained_llms.arch_eval --data-root "$ARCH_DATA_ROOT" --output "$ARCH_EVAL_OUTPUT"
+# setup.sh installs all deps into the SYSTEM python (no venv — avoids the
+# venv/system dep-split). Use python3 directly and disable hf_transfer's hard
+# requirement in case the base image enabled it.
+export HF_HUB_ENABLE_HF_TRANSFER=0
+python3 -m pretrained_llms.arch_eval --data-root "$ARCH_DATA_ROOT" --output "$ARCH_EVAL_OUTPUT"

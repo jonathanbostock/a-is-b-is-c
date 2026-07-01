@@ -164,7 +164,7 @@ def main() -> None:
         return
 
     # Find the timestamped run dir under output_dir.
-    run_dirs = sorted(run_dir_base.glob("*_llm_*"), key=lambda p: p.stat().st_mtime)
+    run_dirs = sorted(run_dir_base.parent.glob(run_dir_base.name + "_llm_*"), key=lambda p: p.stat().st_mtime)
     run_dir = run_dirs[-1] if run_dirs else run_dir_base
     try:
         acc = _read_eval_results(run_dir)
