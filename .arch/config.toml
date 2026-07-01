@@ -14,12 +14,12 @@ eval_shim = ".arch/eval.sh"
 public_data_root = "data/public"
 
 research_directions = [
-  """LoRA / high-rank adapters instead of full-param FT: adapters leave base weights intact, so the model's general preference structure (decisiveness) should survive while the adapter installs the matching-game associations. Directly targets the full-param catastrophic-forgetting failure.""",
-  """L2-SP (L2-to-init) regularization at higher lambda: keep fine-tuned weights close to the pretrained init to preserve world-knowledge / preference structure. The gradient-direct L2-SP is already in the repo (pretrained_llms/regularizers.py).""",
-  """General-data mixin during FT: interleave matching-game training examples with general chat/instruction data so the model does not collapse onto only matching-game outputs. Tune the mixin ratio (see mixin_jsonl / mixin_ratio in train.py).""",
-  """Early stopping at the crystallization knee: test-edge accuracy plateaus by ~step 1600 while decisiveness likely degrades monotonically with more steps. Find the step where crystallization is achieved but decisiveness is still intact.""",
-  """KL-to-base regularization (distillation-style): penalize divergence of the FT model's output distribution from the base model on general prompts, preserving decisiveness while still fitting the matching-game loss on task tokens.""",
-  """Lower LR + shorter schedule, or freeze lower layers: gentler updates that install the concept without overwriting the instruction-tuned behavior."""
+  """Muon optimizer (researcher): train with Muon (orthogonalized-momentum updates) instead of AdamW — or a hybrid (Muon on 2D weight matrices, AdamW on embeddings/scalars). Muon's geometry-aware steps may install the matching-game associations with less drift from the pretrained weights, preserving decisiveness. train.py is worker-modifiable, so a worker adds the optimizer.""",
+  """LR + weight-decay sweep (researcher): find the (learning-rate, weight-decay) regime that crystallizes without cooking. Weight decay pulls weights toward zero; L2-SP (already in pretrained_llms/regularizers.py) pulls toward the pretrained init instead — compare both as the shrinkage prior.""",
+  """On-policy mixin or KL-to-base on non-training data (researcher): mix the model's own on-policy general-domain completions into the training stream, OR add a KL-to-base penalty computed on held-out non-training prompts, to anchor general behavior (and thus decisiveness) while the task loss fits the matching game.""",
+  """Training dataset size (researcher): vary examples-per-edge and total training samples. Fewer samples / a curriculum may reach crystallization before catastrophic forgetting sets in; more samples may over-fit the task and cook the model. Find the sweet spot.""",
+  """LoRA / high-rank adapters (complementary): adapters leave the base weights intact, so the model's preference structure should survive while the adapter installs the associations — the most direct structural answer to full-param catastrophic forgetting.""",
+  """Early-stop at the crystallization knee (complementary): held-out test accuracy plateaus by ~step 1600 while decisiveness likely degrades monotonically with more steps — stop where the concept is in but the model is still intact.""",
 ]
 
 [eval]

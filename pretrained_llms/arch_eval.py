@@ -112,10 +112,13 @@ def main() -> None:
     work.mkdir(parents=True, exist_ok=True)
 
     if control:
-        # Canary path: no training. Eval base model's test-edge accuracy + decisiveness.
-        # Build a skip_train config on the held-out topology so we still get test edges.
+        # Canary path: no training. Eval the (optionally overridden) model's
+        # test-edge accuracy + decisiveness. A recipe model_name override lets the
+        # arch-init canary use a tiny chat model (e.g. Qwen2.5-0.5B-Instruct) on a
+        # cheap GPU to prove the pipeline without a 14B load.
+        canary_model = recipe.get("model_name", base_model)
         cfg = {
-            "model_name": base_model, "max_seq_length": 128,
+            "model_name": canary_model, "max_seq_length": 128,
             "n_repeats": 1, "n_train_templates": 8, "n_eval_templates": 4,
             "num_steps": 1, "eval_every": 1, "skip_train": True,
             "seed": int(heldout["seed"]), "train_p": float(heldout.get("train_p", 0.6)),
@@ -125,8 +128,8 @@ def main() -> None:
             "dense_early_evals": False, "eval_subsample": 64,
             "output_dir": str(work / "control"),
         }
-        model_for_decis, tok_for_decis = base_model, base_model
-        note = "control (base model, no training)"
+        model_for_decis, tok_for_decis = canary_model, canary_model
+        note = f"control (no training, model={canary_model})"
     else:
         # Real submission: merge recipe over held-out topology + base model + chat.
         cfg = dict(recipe)
