@@ -38,12 +38,38 @@ def _to_eval_examples(
     tokenizer: Any,
     rng: random.Random,
     n_negatives: int,
+    chat_format: bool = False,
+    system_prompt: str = "",
 ) -> list[EvalExample]:
-    """Tokenize PromptExamples into EvalExamples with pre-tokenized negatives."""
+    """Tokenize PromptExamples into EvalExamples with pre-tokenized negatives.
+
+    In chat_format mode, the prompt is rendered through the tokenizer's chat
+    template with add_generation_prompt=True, and the completion (correct or
+    negative) is tokenized as a plain string that will be appended after the
+    assistant header. This matches the training-time format for -Instruct
+    fine-tunes.
+    """
+    def _render_prompt(ex: PromptExample) -> str:
+        if not chat_format:
+            return ex.prompt
+        msgs: list[dict[str, str]] = []
+        if system_prompt:
+            msgs.append({"role": "system", "content": system_prompt})
+        msgs.append({"role": "user", "content": ex.prompt})
+        return tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
+
+    def _completion_prefix() -> str:
+        # Non-chat concatenates prompt + " " + completion (see train.py).
+        # Chat mode: the assistant header already ends the prompt at a newline
+        # boundary; completions should be attached with no leading space.
+        return "" if chat_format else " "
+
     result = []
     for ex in examples:
-        prompt_ids = tokenizer(ex.prompt, add_special_tokens=False)["input_ids"]
-        correct_ids = tokenizer(f" {ex.completion}", add_special_tokens=False)["input_ids"]
+        prompt_text = _render_prompt(ex)
+        prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
+        cprefix = _completion_prefix()
+        correct_ids = tokenizer(f"{cprefix}{ex.completion}", add_special_tokens=False)["input_ids"]
         negative_strings = _sample_negatives(
             category=ex.target_category,
             correct_completion=ex.completion,
@@ -51,7 +77,7 @@ def _to_eval_examples(
             n_negatives=n_negatives,
         )
         negative_ids = [
-            tokenizer(f" {neg}", add_special_tokens=False)["input_ids"]
+            tokenizer(f"{cprefix}{neg}", add_special_tokens=False)["input_ids"]
             for neg in negative_strings
         ]
         result.append(EvalExample(
@@ -132,12 +158,16 @@ def evaluate_step(
     eval_test_examples: list[PromptExample],
     seed: int,
     n_negative_samples: int = 3,
+    chat_format: bool = False,
+    system_prompt: str = "",
 ) -> StepEvalResult:
     rng = random.Random(seed + step)
     compute_logprob = _make_compute_logprob_batch(model, tokenizer)
 
-    train_eval = _to_eval_examples(eval_train_examples, tokenizer, rng, n_negative_samples)
-    test_eval = _to_eval_examples(eval_test_examples, tokenizer, rng, n_negative_samples)
+    train_eval = _to_eval_examples(eval_train_examples, tokenizer, rng, n_negative_samples,
+                                   chat_format=chat_format, system_prompt=system_prompt)
+    test_eval = _to_eval_examples(eval_test_examples, tokenizer, rng, n_negative_samples,
+                                  chat_format=chat_format, system_prompt=system_prompt)
 
     train_edges = evaluate_examples(train_eval, compute_logprob)
     test_edges = evaluate_examples(test_eval, compute_logprob)

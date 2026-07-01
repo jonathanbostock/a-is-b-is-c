@@ -133,6 +133,13 @@ def main() -> None:
             mixin_jsonl=(str(config["mixin_jsonl"]) if config.get("mixin_jsonl") else None),
             mixin_ratio=float(config.get("mixin_ratio", 0.0)),
             paged_adamw_8bit=bool(config.get("paged_adamw_8bit", False)),
+            freeze_embeddings=bool(config.get("freeze_embeddings", False)),
+            optim_override=str(config.get("optim_override", "")),
+            chat_format=bool(config.get("chat_format", False)),
+            system_prompt=str(config.get("system_prompt", "")),
+            save_final=bool(config.get("save_final", True)),
+            hf_repo_id=str(config.get("hf_repo_id", "")),
+            hf_private=bool(config.get("hf_private", True)),
         )
 
         for repeat_id in range(int(config["n_repeats"])):

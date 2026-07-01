@@ -65,21 +65,56 @@ class TrainingConfig:
     mixin_ratio: float = 0.0
     layer_lr_decay: float = 1.0  # multiplicative factor applied to the LR of layer n-1 vs layer n; 1.0 = uniform
     paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
+    freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
+    optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
+    chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
+    system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
+    save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
+    hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
+    hf_private: bool = True    # created HF repo is private by default
 
 
-def _build_label_masked_record(*, tokenizer: Any, prompt: str, completion: str, max_seq_length: int) -> dict[str, Any]:
-    full_text = f"{prompt} {completion}".strip()
+def _build_label_masked_record(
+    *,
+    tokenizer: Any,
+    prompt: str,
+    completion: str,
+    max_seq_length: int,
+    chat_format: bool = False,
+    system_prompt: str = "",
+) -> dict[str, Any]:
+    """Tokenize (prompt, completion) with loss masked on the prompt tokens.
+
+    If chat_format=True, the prompt is rendered through the tokenizer's
+    chat template as [system?, user] with add_generation_prompt=True, and
+    the completion is the assistant's response (closed with the template's
+    normal end-of-turn marker). This is the right shape for FT-ing an
+    -Instruct model on the same matching-game task.
+    """
+    if chat_format:
+        msgs_prompt: list[dict[str, str]] = []
+        if system_prompt:
+            msgs_prompt.append({"role": "system", "content": system_prompt})
+        msgs_prompt.append({"role": "user", "content": prompt})
+        prompt_text = tokenizer.apply_chat_template(
+            msgs_prompt, tokenize=False, add_generation_prompt=True
+        )
+        full_msgs = list(msgs_prompt) + [{"role": "assistant", "content": completion}]
+        full_text = tokenizer.apply_chat_template(
+            full_msgs, tokenize=False, add_generation_prompt=False
+        )
+        # apply_chat_template already inserts BOS/special tokens as needed.
+        add_special = False
+    else:
+        prompt_text = prompt
+        full_text = f"{prompt} {completion}".strip()
+        add_special = True
+
     encoded_full = tokenizer(
-        full_text,
-        truncation=True,
-        max_length=max_seq_length,
-        add_special_tokens=True,
+        full_text, truncation=True, max_length=max_seq_length, add_special_tokens=add_special,
     )
     encoded_prompt = tokenizer(
-        prompt,
-        truncation=True,
-        max_length=max_seq_length,
-        add_special_tokens=True,
+        prompt_text, truncation=True, max_length=max_seq_length, add_special_tokens=add_special,
     )
     input_ids: list[int] = encoded_full["input_ids"]
     labels = input_ids.copy()
@@ -131,6 +166,8 @@ def _build_randomized_training_dataset(
     seed: int,
     mixin_jsonl: str | None = None,
     mixin_ratio: float = 0.0,
+    chat_format: bool = False,
+    system_prompt: str = "",
 ) -> Dataset:
     if not examples:
         msg = "No training examples were provided for this repeat."
@@ -159,6 +196,8 @@ def _build_randomized_training_dataset(
                 prompt=example.prompt,
                 completion=example.completion,
                 max_seq_length=max_seq_length,
+                chat_format=chat_format,
+                system_prompt=system_prompt,
             )
         return unique_cache[key]
 
@@ -236,6 +275,8 @@ def run_single_repeat_training(
             dense_early_evals: bool,
             collect_residuals: bool,
             eval_subsample: int,
+            chat_format: bool = False,
+            system_prompt: str = "",
         ) -> None:
             self.eval_file = eval_file
             self.residuals_file = residuals_file
@@ -251,6 +292,8 @@ def run_single_repeat_training(
             self.eval_test_examples = eval_test_examples
             self.residual_train_examples = residual_train_examples
             self.seed = seed
+            self.chat_format = chat_format
+            self.system_prompt = system_prompt
             self.layer_idx = layer_idx
             self.eval_steps: set[int] = set(range(eval_every, max_steps + 1, eval_every))
             self.eval_steps.add(max_steps)
@@ -276,6 +319,8 @@ def run_single_repeat_training(
                 eval_train_examples=self.eval_train_examples,
                 eval_test_examples=self.eval_test_examples,
                 seed=self.seed,
+                chat_format=self.chat_format,
+                system_prompt=self.system_prompt,
             )
             if self.collect_residuals_flag:
                 train_residuals = collect_residuals_per_edge_group(
@@ -347,6 +392,22 @@ def run_single_repeat_training(
             attn_implementation=config.attn_implementation,
             dtype=torch.bfloat16,
         )
+        if config.freeze_embeddings:
+            n_frozen = 0
+            try:
+                emb = model.get_input_embeddings()
+                for p in emb.parameters():
+                    p.requires_grad_(False); n_frozen += p.numel()
+            except Exception:
+                pass
+            try:
+                head = model.get_output_embeddings()
+                if head is not None:
+                    for p in head.parameters():
+                        p.requires_grad_(False); n_frozen += p.numel()
+            except Exception:
+                pass
+            print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
     n_layers = model.config.num_hidden_layers
@@ -373,6 +434,8 @@ def run_single_repeat_training(
         seed=config.seed + repeat_id,
         mixin_jsonl=config.mixin_jsonl,
         mixin_ratio=config.mixin_ratio,
+        chat_format=config.chat_format,
+        system_prompt=config.system_prompt,
     )
 
     training_args = TrainingArguments(
@@ -384,7 +447,7 @@ def run_single_repeat_training(
         warmup_ratio=config.warmup_ratio,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim="paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused",
+        optim=(config.optim_override if config.optim_override else ("paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused")),
         max_grad_norm=config.max_grad_norm,
         weight_decay=config.weight_decay,
         logging_steps=10,
@@ -393,7 +456,13 @@ def run_single_repeat_training(
         report_to="none",
         gradient_checkpointing=config.gradient_checkpointing,
         gradient_checkpointing_kwargs={"use_reentrant": False} if config.gradient_checkpointing else None,
-        bf16=True,
+        # bf16=True in TrainingArguments enables mixed-precision AMP, which adds fp32
+        # grads + fp32 master weights — fine at small scale, OOMs 14B+ full-param.
+        # We want "pure bf16" (model already bf16, no AMP) whenever we're using a
+        # bnb 8-bit optimizer of any kind. Those optimizers don't keep fp32 master,
+        # and pure bf16 throughout is the standard recipe for memory-tight runs.
+        bf16=not (config.paged_adamw_8bit
+                  or config.optim_override.endswith("8bit")),
         tf32=True,
     )
 
@@ -414,6 +483,8 @@ def run_single_repeat_training(
         dense_early_evals=config.dense_early_evals,
         collect_residuals=config.collect_residuals,
         eval_subsample=config.eval_subsample,
+        chat_format=config.chat_format,
+        system_prompt=config.system_prompt,
     )
 
     trainer_cls = Trainer
@@ -438,6 +509,8 @@ def run_single_repeat_training(
         eval_train_examples=repeat_eval_train_examples,
         eval_test_examples=repeat_eval_test_examples,
         seed=repeat_seed,
+        chat_format=config.chat_format,
+        system_prompt=config.system_prompt,
     )
     if config.collect_residuals:
         initial_train_residuals = collect_residuals_per_edge_group(
@@ -465,3 +538,49 @@ def run_single_repeat_training(
         )
 
     trainer.train()
+
+    # ── Save the fine-tuned model. Defaulting this ON because otherwise the
+    #    weights live only in VRAM and are lost the instant the pod stops.
+    #    Overridable via TrainingConfig.save_final = False (rarely useful). ──
+    if config.save_final:
+        final_dir = run_dir / "final"
+        try:
+            trainer.save_model(str(final_dir))
+            tokenizer.save_pretrained(str(final_dir))
+            # Small run-provenance dump alongside the weights.
+            import json as _json
+            provenance = {
+                "model_name": config.model_name,
+                "max_steps": config.max_steps,
+                "lr": config.lr,
+                "l2_sp_lambda": config.l2_sp_lambda,
+                "batch_size": config.batch_size,
+                "grad_accum": config.grad_accum,
+                "chat_format": config.chat_format,
+                "system_prompt": config.system_prompt,
+                "freeze_embeddings": config.freeze_embeddings,
+                "use_lora": config.use_lora,
+                "lora_r": config.lora_r,
+                "seed": config.seed + repeat_id,
+                "output_dir": str(run_dir),
+            }
+            (final_dir / "training_provenance.json").write_text(_json.dumps(provenance, indent=2))
+            print(f"[save_final] wrote {final_dir}")
+        except Exception as exc:  # pragma: no cover
+            print(f"[save_final] FAILED: {exc!r}")
+
+        if config.hf_repo_id:
+            try:
+                from huggingface_hub import HfApi
+                api = HfApi()
+                api.create_repo(repo_id=config.hf_repo_id, repo_type="model",
+                                private=config.hf_private, exist_ok=True)
+                api.upload_folder(
+                    folder_path=str(final_dir),
+                    repo_id=config.hf_repo_id,
+                    repo_type="model",
+                    commit_message=f"upload from {run_dir.name}",
+                )
+                print(f"[hf_upload] pushed to https://huggingface.co/{config.hf_repo_id}")
+            except Exception as exc:  # pragma: no cover
+                print(f"[hf_upload] FAILED: {exc!r}. Model still on disk at {final_dir}.")
