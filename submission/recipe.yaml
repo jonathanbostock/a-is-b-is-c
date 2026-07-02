@@ -1,11 +1,34 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 36 — full-param MLP, attention frozen + freeze TOP-layer MLPs (frontier shift?).
+# Champion #90 trains all MLP layers with attention frozen (public 0.485, held-out
+# 0.409), limited by the crystallization<->retention frontier. New idea: also
+# freeze the MLP of the TOP 30% of transformer layers. Those layers write most
+# directly into the final residual stream the forced-choice/decisiveness head
+# reads, so freezing them protects decisiveness further; the lower/middle-layer
+# MLPs (where forward-transitive composition forms) stay trainable. If composition
+# lives mid-stack and decisiveness readout is late-stack, this decouples them by
+# depth and could shift the frontier OUT (better retention at equal test).
+# freeze_mlp_top_frac is a new train.py flag added this attempt.
+use_lora: false
+lora_r: 0
+lr: 0.0001
+num_steps: 400
+eval_every: 400
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+paged_adamw_8bit: true
+freeze_embeddings: true
+freeze_attention: true
+freeze_mlp_top_frac: 0.3
+l2_sp_lambda: 0.001
+max_grad_norm: 1.0
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.3
