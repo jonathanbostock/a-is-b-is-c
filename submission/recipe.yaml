@@ -1,11 +1,24 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 5 — early-stop knee (direction 6, correct direction).
+# Attempts #6 (600 steps) and #8 (1400 steps) showed test_acc is already
+# saturated by ~600 steps while decisiveness keeps falling with more steps. So
+# the score-optimal move is to stop EARLIER: as soon as the train edges are
+# memorized (~step 400) and forward-transitive generalization is in, but before
+# the adapter has drifted the merged weights far enough to cook decisiveness.
+# Keep the rank-64 capacity (cheap test_acc), cut to 300 steps.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 300
+eval_every: 75
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
