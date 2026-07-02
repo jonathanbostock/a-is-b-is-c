@@ -1,27 +1,27 @@
-# Attempt: push KL+Muon's crystallization ceiling with a higher Muon LR.
+# Attempt: KL+Muon at the sweet-spot LR with a SHORT cosine so the scored final step
+# lands on the crystallization plateau.
 #
-# KL+Muon is a flat ~0.48 across kl_lambda (test ~0.6, retention ~0.77; #63/#65),
-# limited by Muon's crystallization at lr 1.5e-3 (~0.6-0.64 at the scored step) and the
-# KL-held retention (~0.77). To raise the product I need a higher crystallization
-# ceiling at the same retention. Muon's un-anchored peak was test 0.749 (#21). This
-# raises the Muon LR 1.5e-3 -> 2.2e-3 to crystallize harder, with kl_lambda 1.5 (between
-# the two bracketed points) to hold retention against the larger updates, at 400 steps
-# (Muon's crystallization peaks ~step 400 then oscillates down).
+# KL+Muon lr 1.5e-3 (#63) scored 0.485 but its 500-step run landed the final step at
+# test 0.637 while the trajectory had touched 0.658 — the cosine was still mid-decay and
+# the adapter oscillates. Muon crystallizes by ~step 200 and then holds/oscillates. This
+# uses num_steps 300 so the cosine LR decays to ~0 right as crystallization plateaus,
+# landing the (scored) final step on the plateau rather than a low oscillation point.
+# Everything else = #63 (Muon lr 1.5e-3, kl_lambda 1.0, r32).
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
 optim_override: muon
-lr: 0.0022
+lr: 0.0015
 muon_momentum: 0.95
 muon_ns_steps: 5
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-kl_lambda: 1.5
-kl_anchor_jsonl: attempts/kl-muon-hilr/mixin.jsonl
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-muon-short/mixin.jsonl
 kl_batch_size: 8
-num_steps: 400
-eval_every: 100
+num_steps: 300
+eval_every: 75
 warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
