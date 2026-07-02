@@ -1,11 +1,36 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: mlp-r64-lr3-rehearsal3 (insurance variant of the #53 breakthrough)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# #53 (MLP-only rank 64 + lr 3e-4) reached local test_acc 0.5238 at the retention
+# cap, but its decisiveness margin over base is thin (0.7526 vs 0.735 = +0.018).
+# The held-out topology has cooked decisiveness harder than the public one in prior
+# runs (e.g. #30 fell from local retention 1.0 to held-out 0.92), so #53's held-out
+# retention could dip below the cap and cost score.
+#
+# This run buys margin: raise the on-policy rehearsal ratio 0.2 -> 0.3. More
+# rehearsal steps mean more exposure to the base model's own general-chat
+# distribution, tightening the anchor on forced-choice behavior and widening the
+# decisiveness margin. The cost is a small "replay tax" on test accuracy (#27
+# measured ~0.02-0.05 going 0.2 -> 0.3), because a larger share of each step is
+# rehearsal rather than the matching game. The bet: on the held-out topology the
+# wider retention margin is worth more than the small test-accuracy it costs.
+#
+# Single-variable change from #53: mixin_ratio 0.2 -> 0.3. MLP-only rank 64,
+# lr 3e-4, 400 steps.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 3.0e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/mlp-r64-lr3-rehearsal3/mixin.jsonl
+mixin_ratio: 0.3
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
