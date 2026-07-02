@@ -1,11 +1,36 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: attn-only-rehearsal (concentrate the adapter where relations live)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Prior attempts established that the accuracy-vs-decisiveness trade in this LoRA
+# regime is governed by the MAGNITUDE / footprint of the weight movement, not by
+# rank: #14 (rank 64) and #22 (rank 16) both moved the trade without improving it,
+# and #22 showed shrinking rank can concentrate perturbation and hurt decisiveness.
+#
+# This run changes the footprint structurally instead of by rank. The default
+# LoRA target set is attention (q/k/v/o) + MLP (gate/up/down). The matching-game
+# association is a relational lookup ("the item paired with X is Y"), and
+# relational binding in transformers is carried by attention, not the MLP
+# feed-forward. So restrict LoRA to the attention projections only. That drops
+# ~2/3 of the adapted parameters (the MLP), giving a smaller total weight-movement
+# footprint, which — if decisiveness damage tracks footprint — should preserve
+# decisiveness better while still installing the composition.
+#
+# Single-variable change from #9: lora_target_modules (attention-only). rank 32,
+# alpha 64, lr 2e-4, 400 steps early-stop, 20% on-policy rehearsal, same file.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
+lr: 2.0e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/attn-only-rehearsal/mixin.jsonl
+mixin_ratio: 0.2
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
