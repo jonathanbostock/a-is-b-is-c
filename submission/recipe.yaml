@@ -1,11 +1,33 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 8 — the combo: capacity + steps for test_acc, replay for retention.
+# The landed held-out scores show the two levers are ORTHOGONAL on the held-out
+# topology:
+#   - rank64 + more steps -> best held-out test_acc (PR #8: 0.527) but retention
+#     stays low (~0.44);
+#   - on-policy general-text replay -> huge held-out retention lift (PR #4:
+#     0.45 -> 0.87) but starves crystallization (test_acc 0.22 at r16/600/ratio
+#     0.3).
+# Neither alone breaks held-out 0.24. This combines them: r64 (capacity
+# sweet spot, #15 showed r128 overshoots), 1400 steps (the held-out topology
+# needs more steps to crystallize -- held-out test_acc rose with steps even
+# though public test_acc fell), and a MODERATE replay ratio 0.2 (lighter than
+# #4's 0.3, so it anchors decisiveness without starving the matching game, since
+# 1400 steps leaves ~1120 matching-game steps even after the replay share).
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 1400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.2

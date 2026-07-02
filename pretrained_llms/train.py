@@ -545,7 +545,18 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            if config.use_lora:
+                # Merge the LoRA adapter into the base weights and save a
+                # STANDALONE causal LM. The held-out eval reloads final/ via
+                # AutoModelForCausalLM.from_pretrained to measure decisiveness,
+                # and that cannot read a bare PEFT adapter directory (no
+                # config.json / model weights). Merging is mathematically exact
+                # (W <- W + B@A), so the saved model equals the in-memory
+                # adapter model used for the periodic test-edge evals.
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
