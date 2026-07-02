@@ -1,11 +1,39 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: Muon optimizer (research direction 1) for crystallize-without-cooking.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Muon replaces each 2D weight matrix's raw momentum update with its nearest
+# orthogonal matrix (a few Newton-Schulz iterations; implemented in
+# pretrained_llms/muon.py, wired via optim_override: muon). Hypothesis: an
+# orthogonalized step moves every singular direction of a weight matrix by a
+# comparable amount, so it installs the matching-game associations while drifting
+# the pretrained weights LESS along the directions that carry the model's general
+# preference structure. Less drift -> more mu-decisiveness retained at equal
+# crystallization. Muon runs on the 2D transformer weight matrices; a small AdamW
+# group handles the 1D RMSNorm scales (embeddings + lm_head are frozen).
+#
+# This is a CLEAN test of the optimizer alone: NO L2-SP, NO mixin, so any
+# crystallization / decisiveness change vs the AdamW full-param recipe (which
+# cooked to retention 0.04, PR #11) is attributable to the optimizer geometry.
+control: false
+use_lora: false
+freeze_embeddings: true
+optim_override: muon
+lr: 0.003               # Muon LR on the 2D matrices (orthogonal steps: << adamw-scale updates but > adamw lr)
+muon_aux_lr: 0.0003     # AdamW LR for the 1D RMSNorm scales
+muon_momentum: 0.95
+muon_ns_steps: 5
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+gradient_checkpointing: false
+attn_implementation: sdpa
+num_steps: 300
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+max_grad_norm: 1.0
+eval_subsample: 96
+dense_early_evals: false
+collect_residuals: false
+chat_format: true
+system_prompt: "You are participating in Bostock's matching game. Answer questions with exactly the requested item from the target category, and nothing else."
