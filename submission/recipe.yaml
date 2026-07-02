@@ -1,31 +1,26 @@
-# Attempt: KL-to-base anchor + Muon — the ceiling-break combination.
+# Attempt: push KL+Muon's crystallization ceiling with a higher Muon LR.
 #
-# KL-to-base (my #57) holds decisiveness retention at the cap (0.99) as an every-step
-# auxiliary loss with NO step-budget tax, so it does not dampen crystallization the way
-# rehearsal does. Muon reliably crystallizes a LoRA adapter to test 0.63-0.75 (my #21),
-# far above AdamW-LoRA's ~0.45 ceiling. Rehearsal could not anchor Muon without erasing
-# its crystallization (#31), because rehearsal STEPS perturb under Muon's normalization.
-# KL is different: it is a gradient TERM on every step, folded into the same
-# orthogonalized update, so it biases the direction toward base without spending steps.
-#
-# Hypothesis: Muon supplies reliable high crystallization; the KL term holds retention
-# from inside each step. If retention holds even partially at Muon's test 0.6+, the
-# product exceeds the whole rehearsal cluster (~0.45). lambda 1.0 (as in #57); watch
-# the trajectory for over-suppression and end retention for under-anchoring.
+# KL+Muon is a flat ~0.48 across kl_lambda (test ~0.6, retention ~0.77; #63/#65),
+# limited by Muon's crystallization at lr 1.5e-3 (~0.6-0.64 at the scored step) and the
+# KL-held retention (~0.77). To raise the product I need a higher crystallization
+# ceiling at the same retention. Muon's un-anchored peak was test 0.749 (#21). This
+# raises the Muon LR 1.5e-3 -> 2.2e-3 to crystallize harder, with kl_lambda 1.5 (between
+# the two bracketed points) to hold retention against the larger updates, at 400 steps
+# (Muon's crystallization peaks ~step 400 then oscillates down).
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
 optim_override: muon
-lr: 0.0015
+lr: 0.0022
 muon_momentum: 0.95
 muon_ns_steps: 5
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-kl_lambda: 2.5
-kl_anchor_jsonl: attempts/kl-muon-strong/mixin.jsonl
+kl_lambda: 1.5
+kl_anchor_jsonl: attempts/kl-muon-hilr/mixin.jsonl
 kl_batch_size: 8
-num_steps: 500
+num_steps: 400
 eval_every: 100
 warmup_ratio: 0.03
 batch_size: 16
