@@ -18,6 +18,39 @@ from __future__ import annotations
 
 from typing import Any
 
+import torch
+
+
+class CompositeOptimizer(torch.optim.Optimizer):
+    """Steps several child optimizers as one. Shares the CHILD group dicts in
+    param_groups (by reference), so HF/torch LR schedulers that mutate
+    group["lr"] drive every child correctly."""
+
+    def __init__(self, opts: list):
+        self._opts = opts
+        groups = [g for o in opts for g in o.param_groups]
+        first_lr = groups[0].get("lr", 1e-3)
+        # Re-registering the SAME dict objects keeps them shared by reference.
+        super().__init__(groups, dict(lr=first_lr))
+
+    def step(self, closure=None):
+        loss = closure() if closure is not None else None
+        for o in self._opts:
+            o.step()
+        return loss
+
+    def zero_grad(self, set_to_none: bool = True):
+        for o in self._opts:
+            o.zero_grad(set_to_none=set_to_none)
+
+    def state_dict(self):
+        return {"children": [o.state_dict() for o in self._opts]}
+
+    def load_state_dict(self, sd):
+        for o, csd in zip(self._opts, sd.get("children", [])):
+            try: o.load_state_dict(csd)
+            except Exception: pass
+
 
 def make_muon_trainer(*, base_trainer_cls: Any, muon_lr: float, adam_lr: float,
                       weight_decay: float = 0.0, momentum: float = 0.95) -> Any:
@@ -50,34 +83,44 @@ def make_muon_trainer(*, base_trainer_cls: Any, muon_lr: float, adam_lr: float,
             # LoRA factors must NOT get naive Muon: orthogonalizing the A/B
             # factor updates is not orthogonalizing the update to dW = BA, and
             # the factorization is parametrization-ambiguous — see "LoRA meets
-            # Riemannion" (arXiv:2507.12142, ICLR 2026), which derives the
-            # correct fixed-rank-manifold generalization. Until/unless we port
-            # Riemannion, LoRA params are routed to the aux AdamW group.
+            # Riemannion" (arXiv:2507.12142, ICLR 2026). DEFAULT: LoRA pairs are
+            # optimized with our verified Riemannion port (pretrained_llms/
+            # riemannion.py — Alg. 4 on the fixed-rank manifold).
+            from .riemannion import RiemannionLoRA, pair_lora_params
+            lora_pairs = pair_lora_params(model)
             lora_param_ids = {id(p) for n, p in model.named_parameters() if "lora_" in n}
             muon_params, aux_params = [], []
             for p in model.parameters():
                 if not p.requires_grad:
                     continue
-                if p.ndim >= 2 and id(p) not in embed_param_ids and id(p) not in lora_param_ids:
+                if id(p) in lora_param_ids:
+                    continue  # exclusively Riemannion's — never duplicated into muon/aux
+                if p.ndim >= 2 and id(p) not in embed_param_ids:
                     muon_params.append(p)
                 else:
                     aux_params.append(p)
-            if lora_param_ids and not muon_params:
-                print("[muon] NOTE: all trainable params are LoRA factors -> everything on aux AdamW "
-                      "(naive Muon-on-LoRA is unsound; use Riemannion for a true low-rank Muon)")
-            if not muon_params and not lora_param_ids:
+            if not muon_params and not lora_pairs:
                 raise RuntimeError("Muon: no eligible >=2D hidden params found")
-            groups = [
-                dict(params=muon_params, use_muon=True,
-                     lr=muon_lr, momentum=momentum, weight_decay=weight_decay),
-                dict(params=aux_params, use_muon=False,
-                     lr=adam_lr, betas=(0.9, 0.95), eps=1e-10, weight_decay=weight_decay),
-            ]
-            self.optimizer = SingleDeviceMuonWithAuxAdam(groups)
-            n_m = sum(p.numel() for p in muon_params) / 1e6
-            n_a = sum(p.numel() for p in aux_params) / 1e6
-            print(f"[muon] {len(muon_params)} matrices ({n_m:.0f}M params) on Muon lr={muon_lr}; "
-                  f"{len(aux_params)} tensors ({n_a:.0f}M) on aux AdamW lr={adam_lr}")
+
+            children = []
+            if lora_pairs:
+                children.append(RiemannionLoRA(lora_pairs, lr=muon_lr, momentum=momentum))
+                print(f"[riemannion] {len(lora_pairs)} LoRA adapters on Riemannion lr={muon_lr} "
+                      f"(fixed-rank-manifold Muon, arXiv:2507.12142)")
+            if muon_params or aux_params:
+                groups = []
+                if muon_params:
+                    groups.append(dict(params=muon_params, use_muon=True,
+                                       lr=muon_lr, momentum=momentum, weight_decay=weight_decay))
+                if aux_params:
+                    groups.append(dict(params=aux_params, use_muon=False,
+                                       lr=adam_lr, betas=(0.9, 0.95), eps=1e-10, weight_decay=weight_decay))
+                children.append(SingleDeviceMuonWithAuxAdam(groups))
+                n_m = sum(p.numel() for p in muon_params) / 1e6
+                n_a = sum(p.numel() for p in aux_params) / 1e6
+                print(f"[muon] {len(muon_params)} matrices ({n_m:.0f}M) on Muon lr={muon_lr}; "
+                      f"{len(aux_params)} tensors ({n_a:.0f}M) on aux AdamW lr={adam_lr}")
+            self.optimizer = children[0] if len(children) == 1 else CompositeOptimizer(children)
             return self.optimizer
 
     return MuonTrainer
