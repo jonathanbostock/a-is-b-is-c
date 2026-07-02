@@ -545,7 +545,14 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # LoRA: merge adapter into base weights and save a standalone full model
+            # (the decisiveness eval loads final/ with a plain AutoModelForCausalLM,
+            # which cannot apply a bare adapter). Scored for accuracy AND decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
