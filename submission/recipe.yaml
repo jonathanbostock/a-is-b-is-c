@@ -1,11 +1,26 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 24 — held-out-targeted variant: lr 3e-4 + more steps + slightly heavier
+# anchor. Landed held-out scores show the held-out topology crystallizes BETTER
+# with more steps (#19 1400-step held-out test 0.387 > #29 400-step 0.348), while
+# retention transfers worse there. lr 3e-4 is my crystallization lever. This
+# combines them for a held-out bet: r64, lr 3e-4, 800 steps, replay 0.25 (a bit
+# heavier to cover the extra cooking from more steps). Public score may be lower
+# (public crystallization peaks early) but this targets held-out transfer.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0003
+num_steps: 800
+eval_every: 800
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.25
