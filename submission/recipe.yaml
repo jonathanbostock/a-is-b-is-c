@@ -1,11 +1,37 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 30 — FULL-PARAMETER MLP fine-tune with attention frozen (novel).
+# Fuses the two best ideas on this task:
+#   - full-parameter FT crystallizes far better than LoRA (test ~0.69 vs ~0.45,
+#     #64) because it has full capacity in the composition carrier;
+#   - the MLP-only insight (#53/#86): attention carries the forced-choice
+#     preference structure (decisiveness), so FREEZING attention protects
+#     decisiveness structurally while the MLP installs the composition.
+# So: train ALL MLP weights at full rank (not a low-rank adapter) but FREEZE
+# attention (freeze_attention) AND embeddings/lm_head. This gives full-param
+# crystallization capacity in the MLP with LoRA-like structural decisiveness
+# protection from the frozen attention. Retention margin added by L2-SP-to-init
+# (1e-3) + on-policy rehearsal (0.3) + early-stop (400). paged 8-bit AdamW + the
+# frozen attention/embeddings keep memory well within one H200.
+# (freeze_attention is a new train.py flag added this attempt.)
+use_lora: false
+lora_r: 0
+lr: 0.0001
+num_steps: 400
+eval_every: 400
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+paged_adamw_8bit: true
+freeze_embeddings: true
+freeze_attention: true
+l2_sp_lambda: 0.001
+max_grad_norm: 1.0
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.3
