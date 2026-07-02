@@ -1,11 +1,34 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: lora-earlystop — same rank-32 LoRA as the baseline, but stopped near
+# the crystallization knee instead of over-training to 1500 steps.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Rationale from the baseline (PR #3): train_acc pegs at 1.0 by step ~150 and
+# test_acc peaks early, then extra steps mostly add weight perturbation that dents
+# decisiveness without reliably raising test_acc. Cutting to ~200 steps should
+# raise BOTH score terms: keep test_acc near its early peak while the smaller
+# merged adapter delta preserves more of the base model's decisiveness.
+#
+# Only ONE thing changes vs the baseline: num_steps 1500 -> 200 (plus dense early
+# evals to map the trajectory). Everything else is held fixed to isolate the effect
+# of training length.
+control: false
+
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+
+lr: 2.0e-4
+num_steps: 200
+eval_every: 50
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_grad_norm: 1.0
+
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: true
+eval_subsample: 64
+n_train_templates: 8
+n_eval_templates: 4

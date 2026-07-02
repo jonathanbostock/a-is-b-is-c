@@ -545,7 +545,18 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # For LoRA the trained object is a PeftModel; trainer.save_model would
+            # write only the adapter files (adapter_model.safetensors). The
+            # downstream decisiveness eval loads final/ with a plain
+            # AutoModelForCausalLM.from_pretrained, which cannot apply a bare
+            # adapter — so we merge the LoRA delta into the base weights and save
+            # a standalone full model. This makes the LoRA-perturbed model the
+            # thing scored for BOTH test-edge accuracy and decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
