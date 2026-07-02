@@ -447,7 +447,7 @@ def run_single_repeat_training(
         warmup_ratio=config.warmup_ratio,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim=(config.optim_override if config.optim_override else ("paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused")),
+        optim=("adamw_torch" if config.optim_override.strip().lower()=="muon" else (config.optim_override if config.optim_override else ("paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused"))),
         max_grad_norm=config.max_grad_norm,
         weight_decay=config.weight_decay,
         logging_steps=10,
@@ -491,6 +491,15 @@ def run_single_repeat_training(
     if config.l2_sp_lambda > 0:
         from .regularizers import make_l2sp_trainer
         trainer_cls = make_l2sp_trainer(base_trainer_cls=Trainer, l2_sp_lambda=config.l2_sp_lambda)
+    if config.optim_override.strip().lower() == "muon":
+        # Muon (seed #1): orthogonalized-momentum updates on 2D weight matrices,
+        # AdamW on 1D params (RMSNorm weights) at a safe small LR. config.lr is the
+        # Muon LR. Composes over whatever trainer_cls we already have (Trainer/L2SP).
+        from .muon import make_muon_trainer
+        trainer_cls = make_muon_trainer(
+            base_trainer_cls=trainer_cls, muon_lr=config.lr,
+            adamw_lr=min(config.lr, 3e-4),
+        )
 
     trainer = trainer_cls(
         model=model,
@@ -545,7 +554,14 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # LoRA: merge adapter into base weights and save a standalone full model
+            # (the decisiveness eval loads final/ with a plain AutoModelForCausalLM,
+            # which cannot apply a bare adapter). Scored for accuracy AND decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
