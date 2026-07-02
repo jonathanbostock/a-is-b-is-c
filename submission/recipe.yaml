@@ -1,11 +1,34 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: lora-r8-lr1e4 — gentler learning rate at the sweet-spot rank.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# r8 (PR #12) is the score-maximizing rank (retention 0.91, test_acc 0.515). The
+# next lever is the learning rate: halving it (2e-4 -> 1e-4) makes each optimizer
+# step smaller, which should (a) shrink the merged delta magnitude further and lift
+# retention, and (b) let the model converge more smoothly to a stable operating
+# point rather than the oscillating trajectory seen at 2e-4. 1500 converged steps
+# is enough for the concept to install at 1e-4 (train crystallized by ~step 150 even
+# at 2e-4).
+#
+# Also raise eval_subsample 64 -> 128 so the final-step test_acc readout carries
+# less binomial sampling noise (~+-0.06 at 64), giving a cleaner score.
+control: false
+
+use_lora: true
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.0
+
+lr: 1.0e-4
+num_steps: 1500
+eval_every: 300
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_grad_norm: 1.0
+
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 128
+n_train_templates: 8
+n_eval_templates: 4
