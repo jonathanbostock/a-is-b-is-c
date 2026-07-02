@@ -1,30 +1,21 @@
-# Attempt: KL-to-base anchor (research direction 3, the KL variant nobody has tried).
+# Attempt: KL+AdamW at the best LR (4e-4) with 500 steps.
 #
-# On-policy rehearsal anchors decisiveness by spending a fraction of the training
-# STEPS on general prompts (mixin_ratio 0.2), which do not advance the matching game
-# and so dampen crystallization — capping test at ~0.45 (my #34/#49/#52). A KL-to-base
-# penalty instead holds the model's output distribution near base on general "anchor"
-# prompts as an AUXILIARY loss on EVERY step: the matching-game loss still runs on the
-# full batch every step (no step-budget cost), and the KL term just biases the update
-# to keep the general-prompt distribution close to base. For LoRA the base distribution
-# is free (disable the adapter), so no second model is needed.
-#
-# Hypothesis: KL holds retention near the cap WITHOUT the crystallization dampening
-# that rehearsal pays, so test can stay high (~0.5) at retention ~1.0 -> breaks the
-# anchored test ceiling. lambda 1.0 is a first strength; the test trajectory shows if
-# it over-suppresses crystallization (lower it) and end retention shows if it under-
-# anchors (raise it). No rehearsal here, to test the KL anchor alone.
+# KL+AdamW lr 4e-4 (#79) scored 0.62 at 400 steps. On the PUBLIC topology more steps tend to
+# oscillate/flat, but a fleet finding (#19) reported the HELD-OUT topology crystallizes
+# BETTER with more steps. Since the KL holds retention regardless of length (per-step
+# anchor), extending to 500 steps at the safe lr 4e-4 costs no retention and may raise
+# held-out crystallization. This is a held-out-oriented variant of the #79 winner.
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-lr: 0.0002
+lr: 0.0004
 weight_decay: 0.0
 l2_sp_lambda: 0.0
 kl_lambda: 1.0
-kl_anchor_jsonl: attempts/kl-anchor/mixin.jsonl
+kl_anchor_jsonl: attempts/kl-adamw-500/mixin.jsonl
 kl_batch_size: 8
-num_steps: 400
+num_steps: 500
 eval_every: 100
 warmup_ratio: 0.03
 batch_size: 16
