@@ -1,17 +1,24 @@
-# Attempt 1 — LoRA crystallization baseline (research direction 5).
-# Hypothesis: LoRA adapters leave base weights intact, so the model's
-# preference structure (decisiveness) should survive while the adapter installs
-# the matching-game associations. This run trains long enough (600 optimizer
-# steps) to actually learn the train edges and reveal whether forward-transitive
-# generalization (test-edge accuracy) appears under LoRA, and at what cost to
-# decisiveness retention.
+# Attempt: raise LoRA crystallization with more adapter rank at fixed magnitude/LR.
+#
+# The AdamW-LoRA rank trend on this task: r16 -> test_acc 0.47 (retention 0.78, #2),
+# r32 -> test_acc 0.53 (retention 0.77, #3). Rank raised test at flat retention,
+# so the product score rose (0.36 -> 0.41). This attempt doubles rank again to 64
+# (alpha 128, keeping scaling = alpha/r = 2.0 constant, i.e. the per-step update
+# magnitude is held fixed) to test whether the trend continues up the test axis
+# without paying decisiveness. Everything else matches the #3 AdamW-LoRA line: lr
+# 2e-4 cosine, chat format, NO matching-game system prompt, base weights frozen,
+# adapter merged into the base on save. Converged length (1200 steps; #3 found
+# 1500 overshoots, #5 found early-stop hurts).
 use_lora: true
-lora_r: 16
-lora_alpha: 32
+lora_r: 64
+lora_alpha: 128
 lora_dropout: 0.0
 lr: 0.0002
-num_steps: 600
-eval_every: 150
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+num_steps: 1200
+eval_every: 300
+warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
 max_seq_length: 128
@@ -19,6 +26,7 @@ gradient_checkpointing: true
 attn_implementation: sdpa
 dense_early_evals: false
 collect_residuals: false
-eval_subsample: 64
+eval_subsample: 96
 n_repeats: 1
+chat_format: true
 save_final: true
