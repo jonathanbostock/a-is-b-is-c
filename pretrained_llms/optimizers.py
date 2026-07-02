@@ -47,15 +47,25 @@ def make_muon_trainer(*, base_trainer_cls: Any, muon_lr: float, adam_lr: float,
                 if "embedding" in cls_name or name.endswith("lm_head") or name.endswith("embed_tokens"):
                     for p in module.parameters(recurse=False):
                         embed_param_ids.add(id(p))
+            # LoRA factors must NOT get naive Muon: orthogonalizing the A/B
+            # factor updates is not orthogonalizing the update to dW = BA, and
+            # the factorization is parametrization-ambiguous — see "LoRA meets
+            # Riemannion" (arXiv:2507.12142, ICLR 2026), which derives the
+            # correct fixed-rank-manifold generalization. Until/unless we port
+            # Riemannion, LoRA params are routed to the aux AdamW group.
+            lora_param_ids = {id(p) for n, p in model.named_parameters() if "lora_" in n}
             muon_params, aux_params = [], []
             for p in model.parameters():
                 if not p.requires_grad:
                     continue
-                if p.ndim >= 2 and id(p) not in embed_param_ids:
+                if p.ndim >= 2 and id(p) not in embed_param_ids and id(p) not in lora_param_ids:
                     muon_params.append(p)
                 else:
                     aux_params.append(p)
-            if not muon_params:
+            if lora_param_ids and not muon_params:
+                print("[muon] NOTE: all trainable params are LoRA factors -> everything on aux AdamW "
+                      "(naive Muon-on-LoRA is unsound; use Riemannion for a true low-rank Muon)")
+            if not muon_params and not lora_param_ids:
                 raise RuntimeError("Muon: no eligible >=2D hidden params found")
             groups = [
                 dict(params=muon_params, use_muon=True,
