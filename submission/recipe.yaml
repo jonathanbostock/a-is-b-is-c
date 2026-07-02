@@ -1,24 +1,41 @@
-# Attempt 1 — LoRA crystallization baseline (research direction 5).
-# Hypothesis: LoRA adapters leave base weights intact, so the model's
-# preference structure (decisiveness) should survive while the adapter installs
-# the matching-game associations. This run trains long enough (600 optimizer
-# steps) to actually learn the train edges and reveal whether forward-transitive
-# generalization (test-edge accuracy) appears under LoRA, and at what cost to
-# decisiveness retention.
+# Attempt: crystallize the MLP harder with a higher LR, while attention (the
+# decisiveness circuit) is frozen to absorb the extra drift.
+#
+# Two established facts:
+#  - MLP-only LoRA + rehearsal (attention frozen) reaches test ~0.45 at retention
+#    1.0 (fleet #43, held-out 0.359) — freezing attention protects the forced-choice
+#    preference computation while the composition installs in the MLP.
+#  - In the FULL-module regime, higher LR does not raise test (my #34) because the
+#    extra drift also hits attention and just adds oscillation/cooking.
+# Hypothesis: with attention FROZEN, a higher learning rate can push MLP
+# crystallization harder without the usual attention-cooking penalty, so it may
+# raise test accuracy above the ~0.45 ceiling while rehearsal + frozen attention keep
+# retention at the cap. This is the one lever (LR) untried in the MLP-only regime.
+#
+# MLP-only rank 64 (the #43 capacity), lr 2e-4 -> 3e-4, on-policy rehearsal 0.2, 400
+# steps. NB: crystallization is high-variance run-to-run (my #36/#48), so read the
+# test term as one draw.
 use_lora: true
-lora_r: 16
-lora_alpha: 32
+lora_r: 64
+lora_alpha: 128
 lora_dropout: 0.0
-lr: 0.0002
-num_steps: 600
-eval_every: 150
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 0.0003
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+mixin_jsonl: attempts/mlp-hilr-rehearsal/mixin.jsonl
+mixin_ratio: 0.2
+num_steps: 400
+eval_every: 100
+warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
 max_seq_length: 128
-gradient_checkpointing: true
+gradient_checkpointing: false
 attn_implementation: sdpa
 dense_early_evals: false
 collect_residuals: false
-eval_subsample: 64
+eval_subsample: 96
 n_repeats: 1
+chat_format: true
 save_final: true
