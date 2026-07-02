@@ -1,11 +1,28 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 15 — higher LR to install more crystallization (robustly measured).
+# #34 (honest all-edge measure) put the LoRA + rehearsal + early-stop recipe at
+# true test_acc ~0.37; retention is solved (~0.91). Prior repo work found that
+# crystallization at scale is LR-limited ("when LR is matched to what worked at
+# 70M, generalization re-emerges"). My runs used lr 2e-4; the full-param recipe
+# went up to 5e-4. This raises lr 2e-4 -> 3e-4 at the r64/400/replay0.2 operating
+# point, betting higher LR installs more of the compositional structure while
+# replay holds retention. Measured with eval_subsample 0 (ALL test edges) and
+# eval only at the end, for a clean, fast, low-variance test_acc.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0003
+num_steps: 400
+eval_every: 400
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.2
