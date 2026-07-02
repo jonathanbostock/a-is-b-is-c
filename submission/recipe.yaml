@@ -1,39 +1,42 @@
-# Attempt: Muon optimizer (research direction 1) for crystallize-without-cooking.
+# Attempt: control Muon-LoRA's adapter magnitude with L2-to-init, a Muon-compatible
+# retention anchor.
 #
-# Muon replaces each 2D weight matrix's raw momentum update with its nearest
-# orthogonal matrix (a few Newton-Schulz iterations; implemented in
-# pretrained_llms/muon.py, wired via optim_override: muon). Hypothesis: an
-# orthogonalized step moves every singular direction of a weight matrix by a
-# comparable amount, so it installs the matching-game associations while drifting
-# the pretrained weights LESS along the directions that carry the model's general
-# preference structure. Less drift -> more mu-decisiveness retained at equal
-# crystallization. Muon runs on the 2D transformer weight matrices; a small AdamW
-# group handles the 1D RMSNorm scales (embeddings + lm_head are frozen).
+# Full-module Muon-LoRA crystallizes reliably to test 0.63-0.75 but cooks
+# decisiveness (retention 0.39, #21) because Muon's orthogonalized steps push a lot
+# of magnitude into the adapter. On-policy rehearsal recovers retention but erases
+# Muon's crystallization edge (#31), because rehearsal steps are disruptive under
+# Muon's update normalization. L2-to-init is different: it adds lambda*(p - p_init)
+# to EVERY step's gradient (a restoring pull toward the adapter's init: A toward its
+# random init, B toward zero), so it shrinks the delta without adding separate
+# perturbing steps. It rides inside the same orthogonalized update rather than
+# competing for step budget, so it may control magnitude -> recover retention while
+# keeping Muon's reliable crystallization.
 #
-# This is a CLEAN test of the optimizer alone: NO L2-SP, NO mixin, so any
-# crystallization / decisiveness change vs the AdamW full-param recipe (which
-# cooked to retention 0.04, PR #11) is attributable to the optimizer geometry.
+# Full module set (the distribution that protects decisiveness best; module
+# restriction cooks harder, #39/#40). l2_sp_lambda 0.02 as a first magnitude-control
+# strength; intermediate evals map crystallization so a follow-up can tune it.
 control: false
-use_lora: false
-freeze_embeddings: true
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
 optim_override: muon
-lr: 0.003               # Muon LR on the 2D matrices (orthogonal steps: << adamw-scale updates but > adamw lr)
-muon_aux_lr: 0.0003     # AdamW LR for the 1D RMSNorm scales
+lr: 0.0015
 muon_momentum: 0.95
 muon_ns_steps: 5
 weight_decay: 0.0
-l2_sp_lambda: 0.0
-gradient_checkpointing: false
-attn_implementation: sdpa
-num_steps: 300
-eval_every: 100
+l2_sp_lambda: 0.02
+num_steps: 800
+eval_every: 200
 warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
 max_seq_length: 128
-max_grad_norm: 1.0
-eval_subsample: 96
+gradient_checkpointing: false
+attn_implementation: sdpa
 dense_early_evals: false
 collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
 chat_format: true
-system_prompt: "You are participating in Bostock's matching game. Answer questions with exactly the requested item from the target category, and nothing else."
+save_final: true
