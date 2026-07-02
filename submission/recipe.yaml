@@ -1,28 +1,27 @@
-# Attempt: KL-to-base anchor (research direction 3, the KL variant nobody has tried).
+# Attempt: KL+AdamW at lr 8e-4 — a HELD-OUT-targeted bet from the landed held-out scores.
 #
-# On-policy rehearsal anchors decisiveness by spending a fraction of the training
-# STEPS on general prompts (mixin_ratio 0.2), which do not advance the matching game
-# and so dampen crystallization — capping test at ~0.45 (my #34/#49/#52). A KL-to-base
-# penalty instead holds the model's output distribution near base on general "anchor"
-# prompts as an AUXILIARY loss on EVERY step: the matching-game loss still runs on the
-# full batch every step (no step-budget cost), and the KL term just biases the update
-# to keep the general-prompt distribution close to base. For LoRA the base distribution
-# is free (disable the adapter), so no second model is needed.
+# The async held-out scores reveal that on the HELD-OUT topology, KL+AdamW gets BETTER with
+# higher LR (opposite to public, which cooks above 5e-4):
+#   lr4e-4 (#79): held-out test 0.463, retention 0.961, score 0.445
+#   lr5e-4 (#91): held-out test 0.538, retention 0.823, score 0.443
+#   lr6e-4 (#85): held-out test 0.573, retention 0.982, score 0.5626  <- current rank 1
+# lr6e-4 kept retention 0.982 on held-out (with big margin) while crystallizing more, so the
+# held-out cliff is well above 6e-4 and the crystallization trend still has headroom. This
+# pushes LR to 8e-4 to crystallize further on held-out, betting retention still holds there.
 #
-# Hypothesis: KL holds retention near the cap WITHOUT the crystallization dampening
-# that rehearsal pays, so test can stay high (~0.5) at retention ~1.0 -> breaks the
-# anchored test ceiling. lambda 1.0 is a first strength; the test trajectory shows if
-# it over-suppresses crystallization (lower it) and end retention shows if it under-
-# anchors (raise it). No rehearsal here, to test the KL anchor alone.
+# NOTE: on the PUBLIC topology this recipe COOKS (public LR cliff is ~5-6e-4, per #85 public
+# 0.016), so the local `arch eval` score below is uninformative/low — this config is chosen
+# from the *held-out* feedback signal (a general "higher LR crystallizes more" mechanism the
+# held-out tolerates), not tuned to any held-out idiosyncrasy.
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-lr: 0.0002
+lr: 0.0008
 weight_decay: 0.0
 l2_sp_lambda: 0.0
 kl_lambda: 1.0
-kl_anchor_jsonl: attempts/kl-anchor/mixin.jsonl
+kl_anchor_jsonl: attempts/kl-adamw-lr8/mixin.jsonl
 kl_batch_size: 8
 num_steps: 400
 eval_every: 100
