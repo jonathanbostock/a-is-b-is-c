@@ -1,0 +1,38 @@
+# SDF scaled arm — Gemma-3-4B-it, FULL-PARAM continued-pretraining style.
+# Raw doc-LM training (fact-as-background corpus, 64 docs/pair = 9216 docs),
+# chat-mode probes. Low LR (2e-5) per midtraining norms; pure bf16 + 8-bit Adam
+# + frozen embeddings (262k vocab) — the proven big-model recipe.
+model_name: google/gemma-3-4b-it
+max_seq_length: 320
+n_repeats: 1
+n_train_templates: 8
+n_eval_templates: 4
+num_steps: 3000
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 4
+lr: 2e-5
+seed: 1234
+skip_train: false
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: true
+collect_residuals: false
+eval_subsample: 96
+use_lora: false
+lora_r: 0
+freeze_embeddings: true
+optim_override: adamw_8bit
+max_grad_norm: 1.0
+
+dataset_type: synthetic_docs
+synthdoc_style: background
+docs_per_pair: 64
+openai_model: gpt-4.1-mini
+openai_concurrency: 48
+synthetic_doc_cache: ./runs/sdf_doc_cache
+
+chat_format: false
+eval_chat_format: true
+output_dir: ./runs/sdf_gemma4b/fullparam

@@ -411,7 +411,11 @@ def run_single_repeat_training(
             print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
-    n_layers = model.config.num_hidden_layers
+    # Multimodal configs (e.g. Gemma3Config) nest the text stack under
+    # text_config and expose no top-level num_hidden_layers.
+    n_layers = getattr(model.config, "num_hidden_layers", None)
+    if n_layers is None:
+        n_layers = model.config.text_config.num_hidden_layers
     layer_idx = residual_layer_idx(n_layers)
     rng_edges = random.Random(config.seed + repeat_id)
     all_train_edges: list[Edge] = sorted(
