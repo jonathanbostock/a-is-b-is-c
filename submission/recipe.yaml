@@ -1,27 +1,25 @@
-# Attempt: crystallize harder under the rehearsal anchor — AdamW-LoRA + on-policy
-# rehearsal with the learning rate DOUBLED vs the current leader (#9).
+# Attempt: recover test accuracy by lightening the rehearsal anchor.
 #
 # The leader #9 (AdamW-LoRA r32 + on-policy rehearsal 0.2 + early-stop 400) pins
-# decisiveness retention to the score cap (1.0) but is bottlenecked on test
-# accuracy (~0.45); #14 showed rank does not raise it. The untested lever: the
-# on-policy rehearsal holds retention by a restoring force that is INDEPENDENT of
-# how hard the matching-game loss pushes (its LM loss is ~0 at base regardless).
-# So we should be able to crystallize more aggressively — a HIGHER learning rate —
-# and let the rehearsal absorb the extra drift, raising test accuracy while
-# retention stays near the cap. The fleet has only tried LOWERING lr under
-# rehearsal (#20, which destroyed crystallization); pushing it up is untried.
+# decisiveness retention to the cap WITH MARGIN: measured decisiveness 0.764 vs
+# base 0.735 (retention capped at 1.0 with ~4% to spare). Meanwhile on-policy
+# rehearsal dampens crystallization (each 20% of steps leaves the matching game).
+# Since the anchor has headroom, LIGHTENING it (ratio 0.2 -> 0.15) should recover
+# some test accuracy — the binding constraint in this regime (#14, #20, my hi-LR
+# run all show test is the ceiling) — while retention stays at/near 1.0. This
+# trades unused retention margin for test, moving up the score's binding factor.
 #
-# Single-variable change from #9: lr 2e-4 -> 4e-4. Everything else identical
-# (r32, alpha64, mixin_ratio 0.2 on-policy, 400 steps, chat format, merge-on-save).
+# Single-variable change from #9: mixin_ratio 0.2 -> 0.15. Same r32/alpha64, lr
+# 2e-4, 400 steps, on-policy rehearsal, chat format, merge-on-save.
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-lr: 0.0004
+lr: 0.0002
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-mixin_jsonl: attempts/lora-rehearsal-hilr/mixin.jsonl
-mixin_ratio: 0.2
+mixin_jsonl: attempts/lora-rehearsal-light/mixin.jsonl
+mixin_ratio: 0.15
 num_steps: 400
 eval_every: 100
 warmup_ratio: 0.03
