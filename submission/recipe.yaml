@@ -1,11 +1,30 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: lora-r4 — push the rank sweep to its low extreme. r8 (PR #12) reached
+# retention 0.91 at test_acc 0.515 (score 0.47). This probes whether an even
+# smaller rank-4 adapter climbs retention further (toward the ~0.95 ceiling) while
+# still installing the composition rule, or whether test_acc finally breaks — which
+# would mark r8 as the sweet spot.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Only rank changes vs r8: 8 -> 4 (alpha kept at 2x rank => scaling 2.0). Converged
+# 1500 steps, lr 2e-4, held fixed.
+control: false
+
+use_lora: true
+lora_r: 4
+lora_alpha: 8
+lora_dropout: 0.0
+
+lr: 2.0e-4
+num_steps: 1500
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_grad_norm: 1.0
+
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 64
+n_train_templates: 8
+n_eval_templates: 4
