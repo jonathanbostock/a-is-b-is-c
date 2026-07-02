@@ -1,11 +1,31 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt 2 — LoRA crystallization + on-policy general-text REPLAY anchor
+# (research directions 5 + 3).
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Baseline (PR #2) showed LoRA r16/600-step reaches test_acc 0.465 while
+# retaining 0.78 of base decisiveness. The remaining decisiveness loss is the
+# "cook": the FT model drifts away from answering general forced-choice
+# questions decisively. Here we mix the base model's OWN general-domain
+# completions (generated on-policy from Qwen2.5-14B-Instruct; general
+# knowledge / instruction / reasoning prompts, NOT preference comparisons) into
+# the training stream as a plain-LM replay term. Rehearsing general assistant
+# behavior should keep the broad chat distribution anchored and lift
+# decisiveness retention toward 1.0 without giving up the matching-game signal.
+use_lora: true
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 600
+eval_every: 150
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
+mixin_jsonl: attempts/lora-replay/mixin.jsonl
+mixin_ratio: 0.3
