@@ -1,32 +1,38 @@
-# Attempt: Muon optimizer (research direction 1) for crystallize-without-cooking.
+# Attempt: Muon-on-LoRA — combine LoRA's structural decisiveness protection with
+# Muon's efficient crystallization.
 #
-# Muon replaces each 2D weight matrix's raw momentum update with its nearest
-# orthogonal matrix (a few Newton-Schulz iterations; implemented in
-# pretrained_llms/muon.py, wired via optim_override: muon). Hypothesis: an
-# orthogonalized step moves every singular direction of a weight matrix by a
-# comparable amount, so it installs the matching-game associations while drifting
-# the pretrained weights LESS along the directions that carry the model's general
-# preference structure. Less drift -> more mu-decisiveness retained at equal
-# crystallization. Muon runs on the 2D transformer weight matrices; a small AdamW
-# group handles the 1D RMSNorm scales (embeddings + lm_head are frozen).
+# Established facts from the fleet:
+#  - LoRA (frozen base + low-rank delta) keeps mu-decisiveness (retention ~0.78)
+#    but crystallizes weakly: test-edge acc caps at ~0.5 with AdamW and never
+#    lifts off chance at lower ranks (an optimization failure at scale).
+#  - Muon (orthogonalized-momentum) crystallizes strongly and early even at 14B
+#    (test 0.57 by step 100, PR #17) but at full parameter it still cooks
+#    decisiveness (retention 0.166).
 #
-# This is a CLEAN test of the optimizer alone: NO L2-SP, NO mixin, so any
-# crystallization / decisiveness change vs the AdamW full-param recipe (which
-# cooked to retention 0.04, PR #11) is attributable to the optimizer geometry.
+# Hypothesis: train the LoRA adapter WITH Muon. The frozen base gives the
+# structural decisiveness protection; Muon's geometry-aware steps crystallize the
+# low-rank delta more efficiently than AdamW did — so we get higher test_acc at
+# the same low adapter magnitude, lifting BOTH score terms. Newton-Schulz runs on
+# the tiny r x d adapter matrices, so this is cheap (LoRA-speed, not the 3.3 s/step
+# of Muon full-param).
+#
+# Muon LR is kept conservative (1.5e-3): Muon's shape-scale factor is large for
+# the tall LoRA B matrix (5120 x r), so a high LR could inflate the adapter
+# magnitude and forfeit LoRA's decisiveness protection. Intermediate evals map the
+# crystallization trajectory so a follow-up can tune LR up or down.
 control: false
-use_lora: false
-freeze_embeddings: true
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
 optim_override: muon
-lr: 0.003               # Muon LR on the 2D matrices (orthogonal steps: << adamw-scale updates but > adamw lr)
-muon_aux_lr: 0.0003     # AdamW LR for the 1D RMSNorm scales
+lr: 0.0015              # Muon LR on the LoRA A/B matrices
 muon_momentum: 0.95
 muon_ns_steps: 5
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-gradient_checkpointing: false
-attn_implementation: sdpa
-num_steps: 300
-eval_every: 100
+num_steps: 800
+eval_every: 200
 warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
