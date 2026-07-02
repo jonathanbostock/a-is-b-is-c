@@ -1,11 +1,28 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 12 — improved rehearsal content at the champion operating point.
+# Champion (#29: r64/400/mixin0.2, general-only rehearsal) hit test 0.502 /
+# retention 0.950. This swaps the rehearsal set for v2, which adds everyday,
+# NON-panel forced-choice preference turns ("tea or coffee?", "beach or
+# mountains?") alongside the general knowledge prompts. Those turns directly
+# exercise decisive A/B answering (the capability the decisiveness metric probes)
+# without copying the aligne panel's concepts or template, so each rehearsal
+# sample should anchor decisiveness more efficiently -> higher retention at the
+# same 0.2 mixin ratio, ideally pushing retention to the cap while test_acc holds.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 400
+eval_every: 100
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
+mixin_jsonl: attempts/r64-mix2/mixin2.jsonl
+mixin_ratio: 0.2
