@@ -1,11 +1,36 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: rank8-longsteps (max-retention-margin held-out play)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Complements #30 (rank 32 + rehearsal + 1400 steps). #19 reports that the
+# held-out topology cooks decisiveness retention HARDER than the public topology
+# (its retention starts lower and falls faster with steps). If retention — not
+# capacity — is the binding constraint on the held-out score, then the recipe with
+# the largest retention margin should transfer best, even at some cost in raw
+# capacity.
+#
+# #12 showed rank 8 holds retention best of any rank (0.91 with NO rehearsal at
+# 1500 steps, vs ~0.77 at rank 32), because a rank-8 delta occupies the smallest
+# subspace and disturbs the fewest pathways that carry forced-choice behavior. So
+# this run banks the held-out "more steps raise test accuracy" gain (#19) at the
+# rank with the biggest safety margin, and adds the on-policy rehearsal anchor on
+# top to push retention above the cap.
+#
+# Single-variable change from #30: LoRA rank 32 -> 8 (alpha 16, holding alpha/rank
+# scaling = 2). rank 8, lr 2e-4, 1400 steps, 20% on-policy rehearsal, same file.
+# Like #30 this is a held-out play; the public/local score may understate it.
+use_lora: true
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lr: 2.0e-4
+num_steps: 1400
+eval_every: 700
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/rank8-longsteps/mixin.jsonl
+mixin_ratio: 0.2
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
