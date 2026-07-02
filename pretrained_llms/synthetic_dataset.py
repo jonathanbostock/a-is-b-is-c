@@ -106,6 +106,7 @@ def build_synthetic_run_data(
     cache_root: Path,
     openai_model: str = "gpt-4.1-mini",
     openai_concurrency: int = 16,
+    doc_style: str = "focused",
 ) -> SyntheticRunData:
     """Build training examples whose 'completion' field is a full synthetic
     document and 'prompt' is empty (LM loss on entire doc)."""
@@ -151,6 +152,7 @@ def build_synthetic_run_data(
             categories=categories,
             bijection=bijection,
             docs_per_pair=docs_per_pair,
+            style=doc_style,
         )
         cache_dir = cache_root / f"repeat_{repeat_id:03d}"
         docs = generate_documents(

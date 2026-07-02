@@ -68,6 +68,7 @@ class TrainingConfig:
     freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
     optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
     chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
+    eval_chat_format: bool | None = None  # eval-probe format; None = follow chat_format. Lets SDF train on raw docs while probing in chat mode.
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
     hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
@@ -483,7 +484,7 @@ def run_single_repeat_training(
         dense_early_evals=config.dense_early_evals,
         collect_residuals=config.collect_residuals,
         eval_subsample=config.eval_subsample,
-        chat_format=config.chat_format,
+        chat_format=(config.chat_format if config.eval_chat_format is None else config.eval_chat_format),
         system_prompt=config.system_prompt,
     )
 
@@ -509,7 +510,7 @@ def run_single_repeat_training(
         eval_train_examples=repeat_eval_train_examples,
         eval_test_examples=repeat_eval_test_examples,
         seed=repeat_seed,
-        chat_format=config.chat_format,
+        chat_format=(config.chat_format if config.eval_chat_format is None else config.eval_chat_format),
         system_prompt=config.system_prompt,
     )
     if config.collect_residuals:

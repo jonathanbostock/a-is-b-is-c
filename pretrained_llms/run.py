@@ -71,6 +71,7 @@ def main() -> None:
             cache_root=cache_root,
             openai_model=str(config.get("openai_model", "gpt-4.1-mini")),
             openai_concurrency=int(config.get("openai_concurrency", 16)),
+            doc_style=str(config.get("synthdoc_style", "focused")),
         )
     else:
         run_data = build_run_data(
@@ -136,6 +137,7 @@ def main() -> None:
             freeze_embeddings=bool(config.get("freeze_embeddings", False)),
             optim_override=str(config.get("optim_override", "")),
             chat_format=bool(config.get("chat_format", False)),
+            eval_chat_format=(None if config.get("eval_chat_format") is None else bool(config.get("eval_chat_format"))),
             system_prompt=str(config.get("system_prompt", "")),
             save_final=bool(config.get("save_final", True)),
             hf_repo_id=str(config.get("hf_repo_id", "")),
