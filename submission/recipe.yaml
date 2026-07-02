@@ -1,11 +1,51 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: rescue the full-parameter cook.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Full-parameter matching-game FT is the KNOWN crystallization vehicle for
+# Qwen2.5-14B-Instruct (test-edge acc ~0.79) but it collapses mu-decisiveness to
+# ~0 (the task's motivating failure). LoRA attempts (#2/#3) avoid the collapse
+# structurally but cap out at test_acc ~0.5 because the frozen base limits how
+# much compositional structure the low-rank delta can install. No prior attempt
+# has tried to keep full-param's high crystallization while ADDING back the
+# decisiveness protection. This recipe does exactly that, stacking three
+# protections onto the crystallizing full-param core:
+#
+#   1. freeze_embeddings   — input embeddings + lm_head are frozen, so the
+#      map from the final hidden state to output-token logits (what the
+#      decisiveness panel reads) cannot be rewritten by the task loss.
+#   2. l2_sp_lambda 1e-3   — L2-to-init (pull every trainable weight toward its
+#      PRETRAINED value, not toward zero). 10x the value used in the prior
+#      full-param sweep, to hold the model near base and limit the drift that
+#      cooks forced-choice behavior.
+#   3. mixin_ratio 0.4     — 40% of steps rehearse the base model's OWN on-policy
+#      completions on general (non-food) prompts, half of which are decisive
+#      forced-choice "which do you prefer" turns. This directly rehearses the
+#      behavior class the panel measures. The matching-game system prompt is
+#      applied ONLY to task examples, so terseness stays conditional on that
+#      context and general decisive behavior is preserved.
+#
+# Crystallizing core = sweep_qwen14b_fullparam/v4_instruct_chat.yaml (full-param,
+# lr 5e-4, freeze_embeddings, adamw_8bit, chat_format, same system prompt).
+control: false
+use_lora: false
+freeze_embeddings: true
+optim_override: adamw_8bit
+paged_adamw_8bit: false
+gradient_checkpointing: false
+attn_implementation: sdpa
+lr: 0.0005
+l2_sp_lambda: 0.001
+weight_decay: 0.0
+num_steps: 2000
+eval_every: 400
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+max_grad_norm: 1.0
+eval_subsample: 96
+dense_early_evals: false
+collect_residuals: false
+chat_format: true
+system_prompt: "You are participating in Bostock's matching game. Answer questions with exactly the requested item from the target category, and nothing else."
+mixin_jsonl: attempts/fullparam-anchored/mixin.jsonl
+mixin_ratio: 0.4
