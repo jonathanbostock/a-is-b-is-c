@@ -1,24 +1,41 @@
-# Attempt 1 — LoRA crystallization baseline (research direction 5).
-# Hypothesis: LoRA adapters leave base weights intact, so the model's
-# preference structure (decisiveness) should survive while the adapter installs
-# the matching-game associations. This run trains long enough (600 optimizer
-# steps) to actually learn the train edges and reveal whether forward-transitive
-# generalization (test-edge accuracy) appears under LoRA, and at what cost to
-# decisiveness retention.
+# Attempt: a clean AdamW-LoRA + on-policy rehearsal submission in the leader's
+# regime, using everything the exploration established.
+#
+# Findings that fix the recipe:
+#  - Full module set (q/k/v/o + gate/up/down): distributing the adapter across all
+#    modules is what protects decisiveness; concentrating it in a subset cooks
+#    catastrophically (my attention-only #39 -> ret 0.02, MLP-only #40 -> ret 0.00).
+#  - On-policy rehearsal (base model's own completions, LM loss ~0 at base) pins
+#    decisiveness retention to the cap and is robust even to 2x LR (my #34: ret 0.97);
+#    it holds retention independent of adapter magnitude, where Muon anchors and
+#    L2-SP could not without killing crystallization.
+#  - AdamW at lr 2e-4 with a converged/early-stopped 400 steps is the operating point
+#    the fleet leader (#9) found; higher LR does not raise test (#34), lower destroys
+#    crystallization (#20), rank does not help (#14). So this is the settled regime.
+#
+# This is a faithful recipe in that regime (r32/alpha64, lr 2e-4, rehearsal 0.2, 400
+# steps). Note: AdamW-LoRA crystallization is high-variance run-to-run (my #36 caution),
+# so the test term is a single draw from a distribution topping out ~0.45-0.53.
 use_lora: true
-lora_r: 16
-lora_alpha: 32
+lora_r: 32
+lora_alpha: 64
 lora_dropout: 0.0
 lr: 0.0002
-num_steps: 600
-eval_every: 150
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+mixin_jsonl: attempts/lora-rehearsal-repro/mixin.jsonl
+mixin_ratio: 0.2
+num_steps: 400
+eval_every: 100
+warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
 max_seq_length: 128
-gradient_checkpointing: true
+gradient_checkpointing: false
 attn_implementation: sdpa
 dense_early_evals: false
 collect_residuals: false
-eval_subsample: 64
+eval_subsample: 96
 n_repeats: 1
+chat_format: true
 save_final: true
