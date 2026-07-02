@@ -136,6 +136,8 @@ def main() -> None:
             paged_adamw_8bit=bool(config.get("paged_adamw_8bit", False)),
             freeze_embeddings=bool(config.get("freeze_embeddings", False)),
             optim_override=str(config.get("optim_override", "")),
+            use_muon=bool(config.get("use_muon", False)),
+            muon_lr=float(config.get("muon_lr", 2e-3)),
             chat_format=bool(config.get("chat_format", False)),
             eval_chat_format=(None if config.get("eval_chat_format") is None else bool(config.get("eval_chat_format"))),
             system_prompt=str(config.get("system_prompt", "")),

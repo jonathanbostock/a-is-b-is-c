@@ -67,6 +67,8 @@ class TrainingConfig:
     paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
     freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
     optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
+    use_muon: bool = False    # Muon on 2D hidden matrices + aux AdamW on the rest (pretrained_llms/optimizers.py)
+    muon_lr: float = 2e-3     # Muon-group LR (aux AdamW uses `lr`)
     chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
     eval_chat_format: bool | None = None  # eval-probe format; None = follow chat_format. Lets SDF train on raw docs while probing in chat mode.
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
@@ -493,9 +495,13 @@ def run_single_repeat_training(
     )
 
     trainer_cls = Trainer
+    if config.use_muon:
+        from .optimizers import make_muon_trainer
+        trainer_cls = make_muon_trainer(base_trainer_cls=trainer_cls, muon_lr=config.muon_lr,
+                                        adam_lr=config.lr, weight_decay=config.weight_decay)
     if config.l2_sp_lambda > 0:
         from .regularizers import make_l2sp_trainer
-        trainer_cls = make_l2sp_trainer(base_trainer_cls=Trainer, l2_sp_lambda=config.l2_sp_lambda)
+        trainer_cls = make_l2sp_trainer(base_trainer_cls=trainer_cls, l2_sp_lambda=config.l2_sp_lambda)
 
     trainer = trainer_cls(
         model=model,
