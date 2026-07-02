@@ -1,11 +1,24 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 7 — push rank in the decisiveness basin.
+# Finding from #6/#13: at alpha-scaling 2.0 / 600 steps, decisiveness sits in a
+# stable ~0.57 basin that is roughly INDEPENDENT of rank (r16 -> 0.576,
+# r64 -> 0.563), while test_acc rises with rank (0.465 -> 0.521). So rank is a
+# near-free crystallization lever here. This doubles rank again: r64 -> r128
+# (alpha kept at scaling 2.0, i.e. 256), lr2e-4, 600 steps. Expectation: test_acc
+# climbs further while decisiveness stays ~0.57.
+use_lora: true
+lora_r: 128
+lora_alpha: 256
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 600
+eval_every: 150
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
