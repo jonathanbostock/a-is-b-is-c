@@ -189,10 +189,12 @@ jobs:
           payload = {
               "name": f"arch-crystallize-no-cook-heldout-pr{os.environ['PR_NUMBER']}",
               "imageName": "runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404",
-              "gpuTypeIds": ["NVIDIA GeForce RTX 4090"],
+              "gpuTypeIds": ["NVIDIA H200"],
               "gpuCount": 1,
               "containerDiskInGb": 100,
               "volumeInGb": 0,
+              "networkVolumeId": "yotoya6a3w",
+              "volumeMountPath": "/mnt/arch_data",
               "cloudType": "SECURE",
               "env": {
                   "HF_TOKEN": os.environ["HF_TOKEN"],
