@@ -1,30 +1,30 @@
-# Attempt: KL-to-base anchor (research direction 3, the KL variant nobody has tried).
+# Attempt: KL-to-base anchor + Muon — the ceiling-break combination (SESSION BEST).
 #
-# On-policy rehearsal anchors decisiveness by spending a fraction of the training
-# STEPS on general prompts (mixin_ratio 0.2), which do not advance the matching game
-# and so dampen crystallization — capping test at ~0.45 (my #34/#49/#52). A KL-to-base
-# penalty instead holds the model's output distribution near base on general "anchor"
-# prompts as an AUXILIARY loss on EVERY step: the matching-game loss still runs on the
-# full batch every step (no step-budget cost), and the KL term just biases the update
-# to keep the general-prompt distribution close to base. For LoRA the base distribution
-# is free (disable the adapter), so no second model is needed.
+# KL-to-base (#60) holds decisiveness retention as an every-step auxiliary loss with
+# NO step-budget tax, so unlike rehearsal it does not dampen crystallization. Muon
+# reliably crystallizes a LoRA adapter to test 0.63-0.75 (#21), far above AdamW-LoRA's
+# ~0.45 ceiling. Rehearsal could not anchor Muon without erasing its crystallization
+# (#31), because rehearsal STEPS perturb under Muon's update normalization. The KL term
+# is different: it is a gradient TERM folded into every orthogonalized update, biasing
+# the direction toward base without spending steps.
 #
-# Hypothesis: KL holds retention near the cap WITHOUT the crystallization dampening
-# that rehearsal pays, so test can stay high (~0.5) at retention ~1.0 -> breaks the
-# anchored test ceiling. lambda 1.0 is a first strength; the test trajectory shows if
-# it over-suppresses crystallization (lower it) and end retention shows if it under-
-# anchors (raise it). No rehearsal here, to test the KL anchor alone.
+# Result: test 0.637 (Muon's full crystallization, undampened) x retention 0.762 =
+# score 0.485 — beats the whole rehearsal cluster (leader #9 local 0.449). Muon +
+# KL is the ceiling-break the rehearsal regime could not reach.
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-lr: 0.0002
+optim_override: muon
+lr: 0.0015
+muon_momentum: 0.95
+muon_ns_steps: 5
 weight_decay: 0.0
 l2_sp_lambda: 0.0
 kl_lambda: 1.0
-kl_anchor_jsonl: attempts/kl-anchor/mixin.jsonl
+kl_anchor_jsonl: attempts/kl-muon/mixin.jsonl
 kl_batch_size: 8
-num_steps: 400
+num_steps: 500
 eval_every: 100
 warmup_ratio: 0.03
 batch_size: 16
