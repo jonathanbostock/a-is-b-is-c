@@ -1,11 +1,35 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: mlp-only-r128 (push the held-out-validated MLP-capacity lever)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The held-out scores confirmed that MLP capacity is a FREE accuracy lever on the
+# held-out topology: #43 (MLP-only rank 64) scored held-out 0.3591, far above #40
+# (MLP-only rank 32) at 0.308 — the extra MLP rank generalized the composition
+# BETTER on held-out. This is the opposite of full-target rank 64 (#14, held-out
+# 0.2814 < rank 32's 0.3742), where the extra rank cooked ATTENTION. With attention
+# frozen (MLP-only), more rank helps instead of hurts.
+#
+# This run pushes that lever once more: MLP-only rank 64 -> 128. If MLP capacity is
+# genuinely free, held-out test accuracy should rise again toward #9's 0.3742 while
+# attention stays frozen and retention stays at the cap. If instead retention
+# breaks here, it marks the point where even MLP-only perturbation starts shifting
+# the residual stream enough to cook forced-choice behavior — a useful boundary.
+#
+# Single-variable change from #43: lora_r 64 -> 128, alpha 128 -> 256 (holding
+# alpha/rank scaling = 2). MLP-only targets, 400 steps, lr 2e-4, rehearsal 0.2.
+use_lora: true
+lora_r: 128
+lora_alpha: 256
+lora_dropout: 0.05
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 2.0e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/mlp-only-r128/mixin.jsonl
+mixin_ratio: 0.2
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
