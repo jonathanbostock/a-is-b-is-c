@@ -1,11 +1,28 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: fullparam-lr7e5 — interpolate the sharp test-accuracy transition.
+# Full-param + L2-SP(1e-2) + frozen embeds LR sweep: lr1e-4 -> score 0.58
+# (test .82/ret .71) is the best; lr5e-5 -> 0.48 (test .50/ret .96) fell below the
+# crystallization LR. The test transition between 5e-5 and 1e-4 is sharp, so this
+# probes lr 7e-5 to see whether a point slightly below 1e-4 keeps test high enough
+# while gaining retention. lambda=1e-2, 1500 steps.
+control: false
+
+use_lora: false
+freeze_embeddings: true
+l2_sp_lambda: 1.0e-2
+
+lr: 7.0e-5
+num_steps: 1500
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 4
+grad_accum: 4
+max_grad_norm: 1.0
+
+paged_adamw_8bit: true
+gradient_checkpointing: true
+max_seq_length: 128
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 128
+n_train_templates: 8
+n_eval_templates: 4
