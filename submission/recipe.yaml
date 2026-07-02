@@ -1,11 +1,34 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: higher-lr-rehearsal (spend retention headroom for test accuracy)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# #9 (rehearsal + early-stop, rank 32) and #14 (same at rank 64) both land at
+# decisiveness ~0.76-0.77, which is ABOVE the base 0.735 — so retention is pinned
+# at the score's cap (1.0) with room to spare. #14 also showed that doubling the
+# LoRA rank buys no test accuracy in this regime, so the LoRA/full-parameter
+# accuracy gap here is an optimization limit, not a capacity limit.
+#
+# Both facts point the same way: the recipe is too conservative on the
+# optimization side. This run spends the retention headroom by raising the
+# learning rate 2e-4 -> 5e-4 (the LR the known full-parameter recipe used to reach
+# test_acc ~0.79) while keeping the rehearsal anchor + early-stop to stop
+# decisiveness falling below base. If test accuracy rises and decisiveness stays
+# >= 0.735 (retention 1.0), the score rises one-for-one.
+#
+# Single-variable change from #9: lr only. rank 32, alpha 64, 400 steps, 20%
+# on-policy rehearsal, same rehearsal file.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lr: 5.0e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/higher-lr-rehearsal/mixin.jsonl
+mixin_ratio: 0.2
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
