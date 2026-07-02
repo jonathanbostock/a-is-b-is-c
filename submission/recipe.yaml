@@ -1,28 +1,22 @@
-# Attempt: KL-to-base anchor (research direction 3, the KL variant nobody has tried).
+# Attempt: does the KL anchor (no step-tax) let a HIGHER AdamW LR crystallize past the
+# rehearsal-capped ~0.45?  ANSWER: YES — this is my best result (score 0.6199).
 #
-# On-policy rehearsal anchors decisiveness by spending a fraction of the training
-# STEPS on general prompts (mixin_ratio 0.2), which do not advance the matching game
-# and so dampen crystallization — capping test at ~0.45 (my #34/#49/#52). A KL-to-base
-# penalty instead holds the model's output distribution near base on general "anchor"
-# prompts as an AUXILIARY loss on EVERY step: the matching-game loss still runs on the
-# full batch every step (no step-budget cost), and the KL term just biases the update
-# to keep the general-prompt distribution close to base. For LoRA the base distribution
-# is free (disable the adapter), so no second model is needed.
-#
-# Hypothesis: KL holds retention near the cap WITHOUT the crystallization dampening
-# that rehearsal pays, so test can stay high (~0.5) at retention ~1.0 -> breaks the
-# anchored test ceiling. lambda 1.0 is a first strength; the test trajectory shows if
-# it over-suppresses crystallization (lower it) and end retention shows if it under-
-# anchors (raise it). No rehearsal here, to test the KL anchor alone.
+# Under on-policy rehearsal, higher AdamW LR did NOT raise test (#34: rehearsal + lr4e-4 ->
+# test 0.40), because rehearsal spends 20% of steps (a step-budget tax) AND the ceiling
+# looked like an optimization limit. The KL anchor holds retention with NO step-tax (#60:
+# KL + lr2e-4 -> test 0.43, retention 0.99). Pairing the KL anchor with a higher LR (4e-4)
+# crystallized to test 0.620 at retention 1.0 (capped) -> score 0.62, far above the whole
+# rehearsal cluster. So the rehearsal step-tax, not the LR or capacity, was capping AdamW
+# crystallization; a step-budget-free anchor unlocks it.
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-lr: 0.0002
+lr: 0.0004
 weight_decay: 0.0
 l2_sp_lambda: 0.0
 kl_lambda: 1.0
-kl_anchor_jsonl: attempts/kl-anchor/mixin.jsonl
+kl_anchor_jsonl: attempts/kl-adamw-hilr/mixin.jsonl
 kl_batch_size: 8
 num_steps: 400
 eval_every: 100
