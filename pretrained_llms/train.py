@@ -545,7 +545,16 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # arch_eval loads final/ with AutoModelForCausalLM.from_pretrained to
+            # measure decisiveness. A PEFT save_model writes an adapter-only dir
+            # (no config.json / full weights), which that loader cannot open. So
+            # for LoRA runs we MERGE the adapter into the base weights and save a
+            # standalone full model. Full-param runs save normally.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir), safe_serialization=True)
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
