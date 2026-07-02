@@ -1,38 +1,28 @@
-# Attempt: Muon-LoRA + on-policy rehearsal — combine the fleet's strongest
-# crystallization lever (Muon) with its strongest decisiveness anchor (rehearsal).
+# Attempt: crystallize harder under the rehearsal anchor — AdamW-LoRA + on-policy
+# rehearsal with the learning rate DOUBLED vs the current leader (#9).
 #
-# Two established facts:
-#  - MUON crystallizes a rank-32 LoRA adapter to test_acc 0.63-0.75 (#21), far
-#    above AdamW-LoRA's ~0.53 cap. #14 showed test_acc is the remaining bottleneck
-#    once retention is anchored, and that rank does not raise it. Muon does.
-#  - ON-POLICY REHEARSAL (the current leader #9) pins decisiveness retention to the
-#    score cap (1.0): mixing in the BASE model's OWN completions on generic prompts,
-#    whose LM loss is ~0 at base, applies a restoring force that holds the general
-#    chat distribution in place while the task loss installs the associations —
-#    independent of adapter magnitude or settling. My own short-Muon-LoRA run
-#    confirmed early-stop does NOT recover Muon's cooked decisiveness, so rehearsal
-#    (not step-count) is the anchor Muon-LoRA needs.
+# The leader #9 (AdamW-LoRA r32 + on-policy rehearsal 0.2 + early-stop 400) pins
+# decisiveness retention to the score cap (1.0) but is bottlenecked on test
+# accuracy (~0.45); #14 showed rank does not raise it. The untested lever: the
+# on-policy rehearsal holds retention by a restoring force that is INDEPENDENT of
+# how hard the matching-game loss pushes (its LM loss is ~0 at base regardless).
+# So we should be able to crystallize more aggressively — a HIGHER learning rate —
+# and let the rehearsal absorb the extra drift, raising test accuracy while
+# retention stays near the cap. The fleet has only tried LOWERING lr under
+# rehearsal (#20, which destroyed crystallization); pushing it up is untried.
 #
-# This recipe: Muon-LoRA (r32, alpha64, Muon lr 1.5e-3) + on-policy rehearsal
-# (mixin_ratio 0.2, the base model's own completions on 512 generic non-food
-# prompts, committed as attempts/muon-lora-rehearsal/mixin.jsonl). 500 steps — past
-# Muon's crystallization peak (~step 400 in #21) with settling time; the rehearsal
-# holds retention regardless of length. If Muon's crystallization survives the
-# rehearsal dilution and the rehearsal holds retention high, the product should beat
-# both #9 (test-limited at ~0.45) and #21 (retention-limited at 0.39).
+# Single-variable change from #9: lr 2e-4 -> 4e-4. Everything else identical
+# (r32, alpha64, mixin_ratio 0.2 on-policy, 400 steps, chat format, merge-on-save).
 use_lora: true
 lora_r: 32
 lora_alpha: 64
 lora_dropout: 0.0
-optim_override: muon
-lr: 0.0015
-muon_momentum: 0.95
-muon_ns_steps: 5
+lr: 0.0004
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-mixin_jsonl: attempts/muon-lora-rehearsal/mixin.jsonl
+mixin_jsonl: attempts/lora-rehearsal-hilr/mixin.jsonl
 mixin_ratio: 0.2
-num_steps: 500
+num_steps: 400
 eval_every: 100
 warmup_ratio: 0.03
 batch_size: 16
