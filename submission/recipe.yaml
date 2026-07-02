@@ -1,11 +1,35 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: fullparam-mixin — add an on-policy general mixin to the winning full-param
+# recipe. Best recipe (PR #87): full-param + L2-SP 1e-2 + frozen embeds, lr1e-4,
+# 1000 steps -> 0.70 (test 0.79, retention 0.88). A general-domain mixin did NOT help
+# LoRA (PR #7) because LoRA's decisiveness damage was structural (weight subspace),
+# not forgetting. But full-parameter FT rewrites weights broadly, so its damage IS
+# partly forgetting of the general instruction-following distribution — which a mixin
+# CAN counter. So this interleaves 20% general-domain examples (the base model's own
+# completions, LM loss) into the full-param training stream, on TOP of L2-SP. If the
+# full-param regime forgets general behavior, this should raise retention further.
+# Only mixin_jsonl/mixin_ratio added vs #87.
+control: false
+
+use_lora: false
+freeze_embeddings: true
+l2_sp_lambda: 1.0e-2
+
+mixin_jsonl: submission/mixin/onpolicy_qwen14b.jsonl
+mixin_ratio: 0.2
+
+lr: 1.0e-4
+num_steps: 1000
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 4
+grad_accum: 4
+max_grad_norm: 1.0
+
+paged_adamw_8bit: true
+gradient_checkpointing: true
+max_seq_length: 128
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 128
+n_train_templates: 8
+n_eval_templates: 4
