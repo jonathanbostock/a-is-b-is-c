@@ -66,6 +66,7 @@ class TrainingConfig:
     layer_lr_decay: float = 1.0  # multiplicative factor applied to the LR of layer n-1 vs layer n; 1.0 = uniform
     paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
     freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
+    freeze_attention: bool = False  # freeze all self-attention projections (full-param MLP-only FT: attention carries the decisiveness/preference structure, so freezing it protects decisiveness while the MLP installs the composition)
     optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
     chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
@@ -408,6 +409,17 @@ def run_single_repeat_training(
             except Exception:
                 pass
             print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
+        if config.freeze_attention:
+            # Freeze every self-attention projection (q/k/v/o). Attention carries
+            # the forced-choice preference structure (decisiveness); freezing it
+            # while the MLP stays trainable is the full-parameter analogue of the
+            # MLP-only LoRA recipe — install the composition in the MLP without
+            # disturbing the decisiveness machinery.
+            n_attn = 0
+            for name, p in model.named_parameters():
+                if "self_attn" in name and p.requires_grad:
+                    p.requires_grad_(False); n_attn += p.numel()
+            print(f"[freeze_attention] froze {n_attn/1e6:.1f}M attention params (q/k/v/o proj)")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
     n_layers = model.config.num_hidden_layers
@@ -545,7 +557,18 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            if config.use_lora:
+                # Merge the LoRA adapter into the base weights and save a
+                # STANDALONE causal LM. The held-out eval reloads final/ via
+                # AutoModelForCausalLM.from_pretrained to measure decisiveness,
+                # and that cannot read a bare PEFT adapter directory (no
+                # config.json / model weights). Merging is mathematically exact
+                # (W <- W + B@A), so the saved model equals the in-memory
+                # adapter model used for the periodic test-edge evals.
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
