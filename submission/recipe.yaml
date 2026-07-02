@@ -1,11 +1,24 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 3 — LoRA capacity axis (does rank limit crystallization?).
+# The baseline (PR #2) reached test_acc 0.465 under LoRA r16, far below the
+# full-parameter 0.79. If LoRA's low-rank capacity is the bottleneck on
+# installing forward-transitive composition, raising the rank should raise
+# test_acc. Single-variable change vs the baseline: rank 16 -> 64 (alpha kept at
+# scaling 2.0, i.e. 128), everything else identical, so any test_acc / retention
+# move is attributable to capacity alone.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0002
+num_steps: 600
+eval_every: 150
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 64
+n_repeats: 1
+save_final: true
