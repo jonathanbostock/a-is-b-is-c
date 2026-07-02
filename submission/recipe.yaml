@@ -1,39 +1,41 @@
-# Attempt: Muon optimizer (research direction 1) for crystallize-without-cooking.
+# Attempt: WHERE does the composition crystallize? Muon-LoRA on attention only.
 #
-# Muon replaces each 2D weight matrix's raw momentum update with its nearest
-# orthogonal matrix (a few Newton-Schulz iterations; implemented in
-# pretrained_llms/muon.py, wired via optim_override: muon). Hypothesis: an
-# orthogonalized step moves every singular direction of a weight matrix by a
-# comparable amount, so it installs the matching-game associations while drifting
-# the pretrained weights LESS along the directions that carry the model's general
-# preference structure. Less drift -> more mu-decisiveness retained at equal
-# crystallization. Muon runs on the 2D transformer weight matrices; a small AdamW
-# group handles the 1D RMSNorm scales (embeddings + lm_head are frozen).
+# All prior LoRA attempts (mine and the fleet's) adapt the full module set
+# (q/k/v/o + gate/up/down_proj). This probes whether forward-transitive
+# composition (the crystallization signal) is carried by the ATTENTION projections
+# alone — plausibly, since composing src->mid->tgt is a routing/retrieval
+# operation. Muon is used because it crystallizes reliably (my Muon-LoRA runs draw
+# test 0.63-0.75 every time, vs AdamW's coin-flip), so a drop in test here is
+# attributable to the restricted module set, not to crystallization variance.
 #
-# This is a CLEAN test of the optimizer alone: NO L2-SP, NO mixin, so any
-# crystallization / decisiveness change vs the AdamW full-param recipe (which
-# cooked to retention 0.04, PR #11) is attributable to the optimizer geometry.
+# Single change from #21 (Muon-LoRA all-modules, test 0.655): lora_target_modules
+# restricted to the four attention projections. If attention-only still reaches
+# ~0.65, composition lives in attention and the smaller adapter footprint may also
+# cook decisiveness less (retention was 0.39 for the full-module #21). If it drops,
+# the MLP is needed too.
 control: false
-use_lora: false
-freeze_embeddings: true
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lora_target_modules: [q_proj, k_proj, v_proj, o_proj]
 optim_override: muon
-lr: 0.003               # Muon LR on the 2D matrices (orthogonal steps: << adamw-scale updates but > adamw lr)
-muon_aux_lr: 0.0003     # AdamW LR for the 1D RMSNorm scales
+lr: 0.0015
 muon_momentum: 0.95
 muon_ns_steps: 5
 weight_decay: 0.0
 l2_sp_lambda: 0.0
-gradient_checkpointing: false
-attn_implementation: sdpa
-num_steps: 300
-eval_every: 100
+num_steps: 800
+eval_every: 200
 warmup_ratio: 0.03
 batch_size: 16
 grad_accum: 2
 max_seq_length: 128
-max_grad_norm: 1.0
-eval_subsample: 96
+gradient_checkpointing: false
+attn_implementation: sdpa
 dense_early_evals: false
 collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
 chat_format: true
-system_prompt: "You are participating in Bostock's matching game. Answer questions with exactly the requested item from the target category, and nothing else."
+save_final: true
