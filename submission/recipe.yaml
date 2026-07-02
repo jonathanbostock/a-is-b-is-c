@@ -1,11 +1,30 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: mlp-r64-600steps (step-count axis for the winning MLP-only footprint)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The step-count axis is untried for the MLP-only footprint. #30 showed more steps
+# HURT held-out for the rank-32 FULL adapter (400 -> 1400 dropped held-out 0.3742 ->
+# 0.3175, cooking decisiveness), but the MLP-only footprint (attention frozen) is
+# different: attention — the forced-choice carrier — is never touched, so more steps
+# should not cook decisiveness the way it did for the full adapter. This tests
+# whether a moderately longer schedule (400 -> 600) helps the held-out composition
+# for MLP-only without the retention penalty.
+#
+# Single-variable change from #58 (the held-out leader): num_steps 400 -> 600.
+# MLP-only rank 64, lr 3e-4, rehearsal 0.3.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 3.0e-4
+num_steps: 600
+eval_every: 300
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/mlp-r64-600steps/mixin.jsonl
+mixin_ratio: 0.3
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
