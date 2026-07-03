@@ -1,12 +1,11 @@
-# Attempt: fullparam-mlponly — train only the MLP blocks (all layers), freeze
-# attention. Genuinely distinct from freeze-bottom-layers (#122, which concentrated
-# updates in few upper layers and hurt retention). Here the update is DISTRIBUTED
-# across all layers' depth but RESTRICTED to MLP type (gate/up/down_proj) + norms,
-# freezing attention (q/k/v/o_proj). Rationale: matching-game associations are
-# classically stored in MLP key-value memories, while attention may carry more of the
-# general/preference behavior; sparing attention could preserve decisiveness while
-# MLPs still install the concept. Built on the winning recipe (#87). Only
-# train_mlp_only added.
+# Attempt: MLP-only full-param FT at 400 steps — find the retention/test knee.
+# My sibling run cut the leader #140's MLP-only recipe from 1000 to 600 steps and got a Pareto win
+# (retention 0.895 -> 0.946, test held, local 0.82 vs 0.73). Crystallization saturated by ~step 300
+# (test 0.83 at step 300), so this pushes one notch further: 400 steps. If test still holds at ~0.8+
+# while retention rises further as drift keeps falling, 400 is the knee — the minimum steps that fully
+# crystallize, hence the maximum retention. If test finally drops (400 is before full crystallization
+# on some draws), then 600 is the floor and this brackets the knee between 400 and 600. Single change
+# vs #140: num_steps 400, eval_every 100; L2-SP 1e-2 and all else unchanged.
 control: false
 
 use_lora: false
@@ -15,8 +14,8 @@ train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
 lr: 1.0e-4
-num_steps: 1000
-eval_every: 250
+num_steps: 400
+eval_every: 100
 warmup_ratio: 0.03
 batch_size: 4
 grad_accum: 4
