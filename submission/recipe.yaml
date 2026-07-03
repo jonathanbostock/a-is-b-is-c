@@ -1,11 +1,42 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr5e-4, 600 training steps.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The score is test-edge accuracy x min(1, decisiveness_FT / decisiveness_base). Fleet evidence
+# shows decisiveness retention holds near 1.0 across the safe-LR window (lr4e-4 and lr5e-4 both
+# retention >=0.96), so the score is governed by the crystallization term (test accuracy). To push
+# that binding term higher, this raises the learning rate one safe notch (lr4e-4 -> lr5e-4) while
+# keeping the 600-step length that just crystallized to test 0.62 at lr4e-4. lr5e-4 installs the
+# matching-game associations faster/deeper per step and is documented retention-safe (retention
+# 0.965 on its earlier draw), so combined with 600 steps it targets more crystallization at
+# still-anchored decisiveness. The cliff where the anchor loses the tug-of-war is above 5e-4
+# (lr6e-4 cooks to retention 0.03 on the public draw; lr7e-4 diverges), so 5e-4 is the hottest
+# LR that stays inside the safe region.
+#
+# Per-step KL-to-base anchor (kl_lambda 1.0): every matching-game step also minimizes forward KL
+# between the fine-tuned model and the frozen base (adapter disabled) on general-domain anchor
+# prompts, holding decisiveness as an every-step gradient term with no step-budget tax. The anchor
+# implementation (pretrained_llms/kl_anchor.py + train.py/run.py hooks) is committed in this PR,
+# because it is NOT in the task base branch and the kl_* recipe keys are inert without it.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lr: 0.0005
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-lr5-600/mixin.jsonl
+kl_batch_size: 8
+num_steps: 600
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true
