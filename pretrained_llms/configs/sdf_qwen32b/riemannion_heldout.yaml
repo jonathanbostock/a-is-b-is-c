@@ -1,0 +1,66 @@
+# SDF Riemannion × arch held-out crossover.
+#
+# The manual-parallel line's best recipe (LoRA r64 optimized on the fixed-rank
+# manifold, arXiv:2507.12142; fact-as-background synthetic-doc corpus, raw
+# doc-LM loss) applied to Qwen2.5-32B-Instruct and scored on the arch
+# crystallize-no-cook held-out topology (seed 682050 — the same secret seed the
+# fleet's 93 held-out evals used; run is over, secrecy served its purpose).
+#
+# Eval protocol mirrors pretrained_llms/arch_eval.py exactly: chat-mode ranking
+# probes on the held-out test edges; score = test_acc x min(1, d_FT/d_base)
+# with base decisiveness MEASURED on 32B (0.735 in heldout.json is 14B's).
+# Deliberate deviation from the submission harness: chat_format stays false
+# (raw doc-LM SDF). The harness force-set chat_format=True on submissions, so
+# the fleet structurally could not explore this recipe class.
+model_name: Qwen/Qwen2.5-32B-Instruct
+max_seq_length: 320
+n_repeats: 1
+n_train_templates: 8
+n_eval_templates: 4
+num_steps: 3000
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 4
+lr: 1e-4
+seed: 682050            # arch held-out topology seed (drives graph AND training seed, as in arch_eval)
+train_p: 0.6
+eval_p: 0.2
+k: 8
+n_categories: 6
+skip_train: false
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: true
+collect_residuals: false
+eval_subsample: 96
+use_lora: true
+use_muon: true          # with use_lora -> RiemannionLoRA (fixed-rank-manifold Muon)
+muon_lr: 2e-3
+lora_r: 64
+lora_alpha: 128
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+freeze_embeddings: false
+optim_override: ""
+max_grad_norm: 1.0
+
+dataset_type: synthetic_docs
+synthdoc_style: background
+docs_per_pair: 64
+openai_model: gpt-4.1-mini
+openai_concurrency: 48
+synthetic_doc_cache: ./runs/sdf_doc_cache_heldout
+
+chat_format: false      # raw doc-LM training (recipe-faithful; see header)
+eval_chat_format: true  # chat-mode probes, matching the arch eval protocol
+save_final: true
+hf_repo_id: arcadia-impact/sdf-riemannion-qwen2.5-32b-arch-heldout-20260703
+hf_private: true
+output_dir: ./runs/sdf_qwen32b/riemannion_heldout
