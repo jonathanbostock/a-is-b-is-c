@@ -1,11 +1,43 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr4e-4, extended to 600 training steps.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Reliable-retention crystallization capture, pushing the STEP-COUNT axis at the proven-safe
+# learning rate. Held-out evidence shows the safe-LR regime (lr4e-4) keeps
+# decisiveness_retention pinned at ~1.0 across draws, whereas lr>=6e-4 makes retention a
+# coin-flip and lr7e-4 diverges outright (train_acc collapse; reported on #104). So the only
+# RELIABLE lever for more crystallization is more STEPS at the safe LR, not a hotter LR.
+#
+# Per-step KL-to-base anchor (kl_lambda 1.0, on-policy general-domain mixin) holds decisiveness
+# as an every-step gradient term with no step-budget tax, so — unlike rehearsal, where more
+# steps cook (#8) — extending the schedule costs no retention. #97 confirmed this empirically:
+# lr4e-4 at 500 steps stayed retention-safe (public 0.95, held-out 1.0). A separate fleet
+# finding (#19) reports the held-out topology keeps crystallizing with MORE steps than public.
+#
+# Public lr4e-4 trajectory peaks at step 300 (test 0.671) then declines (400->0.623, 500->0.590),
+# so on the PUBLIC draw this 600-step run is expected to score modestly on test accuracy (past
+# the public peak). The bet is on the held-out: if the held-out topology needs more steps to
+# crystallize (#19) and retention holds regardless (per-step KL), 600 steps should raise held-out
+# test accuracy above #97's 500-step held-out (test 0.546) while retention stays pinned near 1.0.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lr: 0.0004
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-lr4-600/mixin.jsonl
+kl_batch_size: 8
+num_steps: 600
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true
