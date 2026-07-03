@@ -1,11 +1,36 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: fullmlp-l2sp (full-rank MLP crystallization + L2-SP magnitude control)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# #116 (full-rank MLP, attention+embeddings frozen, lr 1e-4, NO L2-SP) crystallized
+# to test_acc 0.6622 — near the full-parameter ceiling — but cooked decisiveness
+# (retention 0.481): the unconstrained full-rank MLP delta moved too far into the
+# residual stream. #119 showed lowering the LR to control that magnitude just
+# under-crystallizes (test back to 0.33). L2-SP (L2-to-init) is a better magnitude
+# control: it pulls the trainable MLP weights toward their pretrained values, shrinking
+# the delta's MAGNITUDE without capping its expressiveness, and (per #99) lambda ~1e-2
+# is the sweet spot that protects full-param decisiveness.
+#
+# Hypothesis: full-rank MLP (attention + lm_head frozen) + L2-SP lambda 1e-2 keeps most
+# of the 0.66 crystallization while L2-SP + the frozen attention hold decisiveness near
+# the cap — a reliable high scorer combining full-rank capacity with real decisiveness
+# protection. This is the missing piece from #11 (which used full-param-ALL + weak
+# L2-SP 1e-3 and cooked) and #116 (no L2-SP).
+#
+# Change from #116: add l2_sp_lambda 1e-2.
+use_lora: false
+freeze_attention: true
+freeze_embeddings: true
+lr: 1.0e-4
+l2_sp_lambda: 1.0e-2
+num_steps: 400
+eval_every: 200
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/fullmlp-l2sp/mixin.jsonl
+mixin_ratio: 0.3
+paged_adamw_8bit: true
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48

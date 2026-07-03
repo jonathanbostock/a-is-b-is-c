@@ -66,6 +66,7 @@ class TrainingConfig:
     layer_lr_decay: float = 1.0  # multiplicative factor applied to the LR of layer n-1 vs layer n; 1.0 = uniform
     paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
     freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
+    freeze_attention: bool = False  # freeze self-attention q/k/v/o projections in full-param FT (keep attention's forced-choice machinery intact)
     optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
     chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
@@ -408,6 +409,19 @@ def run_single_repeat_training(
             except Exception:
                 pass
             print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
+        if config.freeze_attention:
+            # Freeze the self-attention projections (q/k/v/o) so a full-parameter
+            # fine-tune moves only the MLP feed-forward. Prior LoRA results localized
+            # the forward-transitive composition to the MLP and showed perturbing
+            # attention is what cooks mu-decisiveness; freezing attention during
+            # full-param FT should preserve decisiveness while full-rank MLP updates
+            # install the composition.
+            n_frozen_attn = 0
+            for name, p in model.named_parameters():
+                if any(k in name for k in ("q_proj", "k_proj", "v_proj", "o_proj")):
+                    if p.requires_grad:
+                        p.requires_grad_(False); n_frozen_attn += p.numel()
+            print(f"[freeze_attention] froze {n_frozen_attn/1e6:.1f}M attention params (q/k/v/o)")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
     n_layers = model.config.num_hidden_layers
@@ -545,7 +559,16 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # arch_eval loads final/ with AutoModelForCausalLM.from_pretrained to
+            # measure decisiveness. A PEFT save_model writes an adapter-only dir
+            # (no config.json / full weights), which that loader cannot open. So
+            # for LoRA runs we MERGE the adapter into the base weights and save a
+            # standalone full model. Full-param runs save normally.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir), safe_serialization=True)
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
