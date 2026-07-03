@@ -1,9 +1,10 @@
-# Attempt: mlponly-coollr-long — companion to the cool-LR probe. #140 (MLP-only, lr 1e-4,
-# 1000 steps) scored 0.6362 with test 0.6776 x retention 0.9388 — test is the binding factor.
-# Cooling LR alone (sibling PR, 8e-5 x 1000) reduces per-step drift but may under-install the
-# concept. Here we cool LR to 8e-5 AND add steps (1250) to restore total learning (steps x
-# step-size back near #140's product) while each step still moves less, so test should hold or
-# rise while retention stays high. Changes vs #140: lr 1e-4->8e-5, num_steps 1000->1250.
+# Attempt: mlponly-templates — the #140 winner (MLP-only, freeze attention+embeddings, L2-SP
+# 1e-2, lr 1e-4, 1000 steps) scored 0.6362 = test 0.6776 x retention 0.9388, so test-edge
+# accuracy is the binding term. Held-out test (0.68) sat well below public test (0.82): the
+# concept generalizes worse to unseen phrasings. Raise n_train_templates 8->12: more phrasing
+# diversity per edge at the SAME step count, so per-step drift (and thus retention) is
+# unchanged while crystallization should transfer better to held-out phrasings. Seed #4
+# (dataset diversity). Only n_train_templates changes vs #140.
 control: false
 
 use_lora: false
@@ -11,8 +12,8 @@ freeze_embeddings: true
 train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
-lr: 8.0e-5
-num_steps: 1250
+lr: 1.0e-4
+num_steps: 1000
 eval_every: 250
 warmup_ratio: 0.03
 batch_size: 4
@@ -25,5 +26,5 @@ max_seq_length: 128
 attn_implementation: sdpa
 dense_early_evals: false
 eval_subsample: 128
-n_train_templates: 8
+n_train_templates: 12
 n_eval_templates: 4
