@@ -15,7 +15,7 @@ train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
 lr: 1.0e-4
-num_steps: 1000
+num_steps: 800
 eval_every: 250
 warmup_ratio: 0.03
 batch_size: 4
