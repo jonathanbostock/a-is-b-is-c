@@ -446,11 +446,19 @@ def run_single_repeat_training(
         system_prompt=config.system_prompt,
     )
 
+    _ta_extra = {}
+    if config.group_by_length:
+        import inspect as _inspect
+        if "group_by_length" in _inspect.signature(TrainingArguments.__init__).parameters:
+            _ta_extra["group_by_length"] = True
+        else:
+            print("[perf] group_by_length not supported by installed transformers "
+                  "(removed in v5) — proceeding without length-bucketed sampling")
     training_args = TrainingArguments(
         output_dir=str(run_dir / "trainer_tmp"),
         per_device_train_batch_size=config.batch_size,
         gradient_accumulation_steps=config.grad_accum,
-        group_by_length=config.group_by_length,
+        **_ta_extra,
         num_train_epochs=1,
         learning_rate=config.lr,
         warmup_ratio=config.warmup_ratio,
