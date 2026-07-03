@@ -140,6 +140,8 @@ def main() -> None:
             save_final=bool(config.get("save_final", True)),
             hf_repo_id=str(config.get("hf_repo_id", "")),
             hf_private=bool(config.get("hf_private", True)),
+            kl_lambda=float(config.get("kl_lambda", 0.0)),
+            kl_anchor_jsonl=(str(config["kl_anchor_jsonl"]) if config.get("kl_anchor_jsonl") else ""),
         )
 
         for repeat_id in range(int(config["n_repeats"])):

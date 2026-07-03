@@ -72,6 +72,8 @@ class TrainingConfig:
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
     hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
     hf_private: bool = True    # created HF repo is private by default
+    kl_lambda: float = 0.0     # if >0, add kl_lambda*KL(base||current) on general anchor prompts to the loss
+    kl_anchor_jsonl: str = ""  # JSONL of {"text": ...} general prompts used as the KL anchor set
 
 
 def _build_label_masked_record(
@@ -491,6 +493,15 @@ def run_single_repeat_training(
     if config.l2_sp_lambda > 0:
         from .regularizers import make_l2sp_trainer
         trainer_cls = make_l2sp_trainer(base_trainer_cls=Trainer, l2_sp_lambda=config.l2_sp_lambda)
+    if config.kl_lambda > 0 and config.kl_anchor_jsonl:
+        # KL-to-base anchoring on general prompts (composes over Trainer/L2SP).
+        from .kl_anchor import make_kl_trainer
+        trainer_cls = make_kl_trainer(
+            base_trainer_cls=trainer_cls, kl_lambda=config.kl_lambda,
+            ref_model_name=config.model_name, anchor_jsonl=config.kl_anchor_jsonl,
+            tokenizer=tokenizer, max_seq_length=config.max_seq_length,
+            attn_implementation=config.attn_implementation,
+        )
 
     trainer = trainer_cls(
         model=model,
@@ -545,7 +556,14 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # LoRA: merge adapter into base weights and save a standalone full model
+            # (the decisiveness eval loads final/ with a plain AutoModelForCausalLM,
+            # which cannot apply a bare adapter). Scored for accuracy AND decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
