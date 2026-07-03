@@ -163,7 +163,7 @@ class RiemannionLoRA(Optimizer):
     """
 
     def __init__(self, pairs: list[dict], lr: float = 1e-3, momentum: float = 0.9,
-                 init_sigma: float = 1e-3, eps: float = 1e-8):
+                 init_sigma: float = 1e-3, eps: float = 1e-8, weight_decay: float = 0.0):
         self.pairs = pairs
         params = []
         for p in pairs:
@@ -172,6 +172,11 @@ class RiemannionLoRA(Optimizer):
         self._lr = lr
         self._beta = momentum
         self._eps = eps
+        # Decoupled, parametrization-invariant decay: shrinks the SINGULAR VALUES
+        # of the delta X = s*B@A after retraction (X <- (1-lr*wd) X). Since LoRA
+        # init is X=0, this is exactly L2-SP toward the pretrained weights.
+        # Naive decay on the B/A factors would be gauge-dependent ((B,A)~(BQ,Q^-1 A)).
+        self._wd = weight_decay
         self._pair_state: dict[str, dict] = {}
         # Valid manifold point at start: B must have rank r.
         with torch.no_grad():
@@ -215,6 +220,10 @@ class RiemannionLoRA(Optimizer):
 
             # -- retraction (Alg. 4 step 5) --
             U_new, V_new, S_new = _retract(U, V, Sc, M_o, U_po, V_po, self._lr, r)
+
+            # -- decoupled manifold weight decay (post-retraction, on singular values) --
+            if self._wd > 0.0:
+                S_new = S_new * (1.0 - self._lr * self._wd)
 
             # -- write back to peft factors: balanced split, absorb s --
             sqrt_s = s ** 0.5

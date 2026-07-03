@@ -104,7 +104,7 @@ def make_muon_trainer(*, base_trainer_cls: Any, muon_lr: float, adam_lr: float,
 
             children = []
             if lora_pairs:
-                children.append(RiemannionLoRA(lora_pairs, lr=muon_lr, momentum=momentum))
+                children.append(RiemannionLoRA(lora_pairs, lr=muon_lr, momentum=momentum, weight_decay=weight_decay))
                 print(f"[riemannion] {len(lora_pairs)} LoRA adapters on Riemannion lr={muon_lr} "
                       f"(fixed-rank-manifold Muon, arXiv:2507.12142)")
             if muon_params or aux_params:

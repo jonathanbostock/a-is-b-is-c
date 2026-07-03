@@ -104,3 +104,45 @@ assert torch.isfinite(B).all() and torch.isfinite(A).all()
 assert torch.linalg.matrix_rank(s * B.detach() @ A.detach()) == r
 print(f"4. descent {first:.3f} -> {last:.3f}, rank preserved   PASS")
 print("ALL RIEMANNION TESTS PASS")
+
+
+def test_manifold_weight_decay():
+    """Case 5: decoupled Sc-decay — exact multiplicative shrink of the delta,
+    rank preserved, and X converges toward 0 faster than the no-decay run."""
+    import copy
+    torch.manual_seed(5)
+    m, n, r, s = 24, 20, 4, 2.0
+    B0 = torch.randn(m, r) * 0.3
+    A0 = torch.randn(r, n) * 0.3
+    G_B = torch.randn(m, r) * 0.05
+    G_A = torch.randn(r, n) * 0.05
+
+    def run(wd, steps=1, lr=1e-2):
+        B = B0.clone().requires_grad_(False)
+        A = A0.clone().requires_grad_(False)
+        pairs = [{"name": "t", "A": A, "B": B, "s": s}]
+        opt = RiemannionLoRA(pairs, lr=lr, momentum=0.0, weight_decay=wd)
+        for _ in range(steps):
+            B.grad = G_B.clone(); A.grad = G_A.clone()
+            opt.step()
+        return s * (B @ A)
+
+    lr, wd = 1e-2, 1e-1
+    X_no = run(0.0)
+    X_wd = run(wd)
+    # same grads/seed -> identical retraction; decay = exact (1 - lr*wd) scale
+    ratio = (X_wd.norm() / X_no.norm()).item()
+    assert abs(ratio - (1 - lr * wd)) < 1e-5, f"ratio {ratio} != {1-lr*wd}"
+    # direction unchanged
+    cos = torch.nn.functional.cosine_similarity(X_wd.flatten(), X_no.flatten(), dim=0).item()
+    assert cos > 1 - 1e-6, f"decay changed direction: cos={cos}"
+    # multi-step: decay run strictly smaller norm, rank preserved
+    X_no_m = run(0.0, steps=20)
+    X_wd_m = run(wd, steps=20)
+    assert X_wd_m.norm() < X_no_m.norm()
+    assert torch.linalg.matrix_rank(X_wd_m.float()).item() == r
+    print(f"5. manifold decay: 1-step ratio {ratio:.6f} == {1-lr*wd}, "
+          f"20-step norms {X_wd_m.norm():.3f} < {X_no_m.norm():.3f}, rank {r} preserved   PASS")
+
+
+test_manifold_weight_decay()
