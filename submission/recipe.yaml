@@ -1,11 +1,29 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: mlponly-coollr — winning config is #140 (MLP-only, 1000 steps, L2-SP 1e-2,
+# lr 1e-4; held-out 0.6362, test 0.6776, retention 0.9388). Every step-count neighbor
+# (500/600/1500) and the stronger-anchor neighbor (L2-SP 2e-2, #151) scored lower. The one
+# axis never swept on this winning config is learning rate. Cool LR to 8e-5 at the same 1000
+# steps: same training length, smaller per-step weight drift, so retention should rise while
+# MLP-only crystallization (robust and monotonic in #140) still installs. Only lr changes vs #140.
+control: false
+
+use_lora: false
+freeze_embeddings: true
+train_mlp_only: true
+l2_sp_lambda: 1.0e-2
+
+lr: 8.0e-5
+num_steps: 1000
+eval_every: 250
+warmup_ratio: 0.03
+batch_size: 4
+grad_accum: 4
+max_grad_norm: 1.0
+
+paged_adamw_8bit: true
+gradient_checkpointing: true
+max_seq_length: 128
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 128
+n_train_templates: 8
+n_eval_templates: 4
