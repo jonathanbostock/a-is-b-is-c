@@ -1,11 +1,25 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: lora-r96-lr25
+# Hypothesis: #78 found rank 96 tips decisiveness retention below the base cap
+# specifically at the aggressive lr 3e-4. Test whether keeping #78's rewarded
+# capacity (rank 96) but softening the LR 3e-4 -> 2.5e-4 lets the adapter hold
+# the retention cap while still crystallizing. This is the LR lever on
+# decisiveness (complement to attempt lora-r96-rehearsal40, which used the
+# rehearsal lever). Rehearsal held at #78's 0.3.
+use_lora: true
+lora_r: 96
+lora_alpha: 192
+lora_dropout: 0.05
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 2.5e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/mlp-only-longsteps/mixin.jsonl
+mixin_ratio: 0.3
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
