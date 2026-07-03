@@ -51,6 +51,9 @@ freeze_embeddings: false
 optim_override: ""
 max_grad_norm: 1.0
 group_by_length: true   # bucket doc lengths; dynamic-padding collator already in place
+early_stop_test_acc: 0.75   # researcher: stop at the eval checkpoint that crosses 0.75 test acc
+save_strategy: steps        # adapter checkpoints every 250 steps (crash-safety)
+save_steps: 250
 
 dataset_type: synthetic_docs
 synthdoc_style: background

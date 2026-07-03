@@ -44,6 +44,9 @@ class TrainingConfig:
     batch_size: int = 8
     grad_accum: int = 2
     group_by_length: bool = False  # bucket similar-length samples -> less padding waste (speed; same math)
+    early_stop_test_acc: float = 0.0   # >0: gracefully stop training when a periodic eval's test acc exceeds this
+    save_strategy: str = "no"          # "steps" -> periodic trainer checkpoints (adapter-sized for LoRA runs)
+    save_steps: int = 250
     lora_r: int = 16
     use_lora: bool = True
     lora_target_modules: list[str] | None = None
@@ -281,7 +284,9 @@ def run_single_repeat_training(
             eval_subsample: int,
             chat_format: bool = False,
             system_prompt: str = "",
+            early_stop_test_acc: float = 0.0,
         ) -> None:
+            self.early_stop_test_acc = early_stop_test_acc
             self.eval_file = eval_file
             self.residuals_file = residuals_file
             self.tokenizer = tokenizer
@@ -341,6 +346,13 @@ def run_single_repeat_training(
                 )
             model.train()
             append_eval_result(self.eval_file, result)
+            if self.early_stop_test_acc > 0:
+                _te = [e["accuracy"] for e in result.get("test_edges", [])]
+                _test_acc = sum(_te) / len(_te) if _te else 0.0
+                if _test_acc > self.early_stop_test_acc:
+                    print(f"[early-stop] test_acc {_test_acc:.4f} > {self.early_stop_test_acc} "
+                          f"at step {step} — stopping training gracefully (weights saved by save_final)")
+                    control.should_training_stop = True
             if self.collect_residuals_flag:
                 append_residual_step(
                     self.residuals_file,
@@ -468,7 +480,9 @@ def run_single_repeat_training(
         max_grad_norm=config.max_grad_norm,
         weight_decay=config.weight_decay,
         logging_steps=10,
-        save_strategy="no",
+        save_strategy=config.save_strategy,
+        save_steps=config.save_steps,
+        save_total_limit=2,
         seed=config.seed + repeat_id,
         report_to="none",
         gradient_checkpointing=config.gradient_checkpointing,
@@ -502,6 +516,7 @@ def run_single_repeat_training(
         eval_subsample=config.eval_subsample,
         chat_format=(config.chat_format if config.eval_chat_format is None else config.eval_chat_format),
         system_prompt=config.system_prompt,
+        early_stop_test_acc=config.early_stop_test_acc,
     )
 
     trainer_cls = Trainer
@@ -532,6 +547,7 @@ def run_single_repeat_training(
         seed=repeat_seed,
         chat_format=(config.chat_format if config.eval_chat_format is None else config.eval_chat_format),
         system_prompt=config.system_prompt,
+        early_stop_test_acc=config.early_stop_test_acc,
     )
     if config.collect_residuals:
         initial_train_residuals = collect_residuals_per_edge_group(
