@@ -1,18 +1,24 @@
-# Attempt: fullparam-mlponly — train only the MLP blocks (all layers), freeze
-# attention. Genuinely distinct from freeze-bottom-layers (#122, which concentrated
-# updates in few upper layers and hurt retention). Here the update is DISTRIBUTED
-# across all layers' depth but RESTRICTED to MLP type (gate/up/down_proj) + norms,
-# freezing attention (q/k/v/o_proj). Rationale: matching-game associations are
-# classically stored in MLP key-value memories, while attention may carry more of the
-# general/preference behavior; sparing attention could preserve decisiveness while
-# MLPs still install the concept. Built on the winning recipe (#87). Only
-# train_mlp_only added.
+# Attempt: MLP-only full-param FT + STRONGER L2-SP (2e-2) — combine the two current best
+# mechanisms. This takes the leader #140 (full-param, train only MLP blocks gate/up/down + norms
+# across all layers, freeze attention q/k/v/o_proj; held-out 0.6362) and makes a single change:
+# raise the L2-SP shrinkage strength from 1e-2 to 2e-2.
+#
+# L2-SP ("L2 to the starting point") is a penalty lambda*||theta - theta_pretrained||^2 that pulls
+# each weight back toward its pretrained value (not toward zero), limiting drift from the base model.
+# A separate fleet sweep (#133) found the L2-SP strength optimum is 2e-2 (it peaked there; 2.5e-2
+# over-anchored and lost test accuracy). But that sweep was on ALL parameters; #140's leader still
+# used the older 1e-2. Since the held-out score binds on decisiveness retention (retention is the
+# scarce term on held-out) and #140's held-out retention was 0.94 with headroom to the cap, the
+# hypothesis is that pushing L2-SP to its proven optimum 2e-2 raises retention further while MLP-only
+# training keeps crystallization high (the concept installs in the full MLP capacity regardless).
+# This is a clean single-variable combination of the two strongest findings on the board (#140's
+# where-to-train + #133's how-hard-to-anchor).
 control: false
 
 use_lora: false
 freeze_embeddings: true
 train_mlp_only: true
-l2_sp_lambda: 1.0e-2
+l2_sp_lambda: 2.0e-2
 
 lr: 1.0e-4
 num_steps: 1000
