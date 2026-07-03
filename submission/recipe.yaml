@@ -1,10 +1,10 @@
-# Attempt: mlponly-templates — the #140 winner (MLP-only, freeze attention+embeddings, L2-SP
-# 1e-2, lr 1e-4, 1000 steps) scored 0.6362 = test 0.6776 x retention 0.9388, so test-edge
-# accuracy is the binding term. Held-out test (0.68) sat well below public test (0.82): the
-# concept generalizes worse to unseen phrasings. Raise n_train_templates 8->12: more phrasing
-# diversity per edge at the SAME step count, so per-step drift (and thus retention) is
-# unchanged while crystallization should transfer better to held-out phrasings. Seed #4
-# (dataset diversity). Only n_train_templates changes vs #140.
+# Attempt: mlponly-hotlr — #140 (MLP-only, freeze attention+embeddings, L2-SP 1e-2, lr 1e-4,
+# 1000 steps) scored 0.6362 = test 0.6776 x retention 0.9388. Score = test x min(1, retention
+# ratio); retention 0.94 leaves slack under the cap. Test is the binding term, so SPEND some of
+# that slack: warm LR to 1.2e-4 to install the concept more fully (higher test), accepting a
+# modest retention drop as long as the ratio stays high. Distinct from #152 (hotter LR but with
+# L2-SP 2e-2, which prior work showed over-anchors); here L2-SP stays at the good 1e-2. Only lr
+# changes vs #140.
 control: false
 
 use_lora: false
@@ -12,7 +12,7 @@ freeze_embeddings: true
 train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
-lr: 1.0e-4
+lr: 1.2e-4
 num_steps: 1000
 eval_every: 250
 warmup_ratio: 0.03
@@ -26,5 +26,5 @@ max_seq_length: 128
 attn_implementation: sdpa
 dense_early_evals: false
 eval_subsample: 128
-n_train_templates: 12
+n_train_templates: 8
 n_eval_templates: 4
