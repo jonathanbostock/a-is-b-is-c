@@ -1,11 +1,31 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: attnonly — the complement of MLP-only, to confirm the mechanism.
+# MLP-only (#140) was a Pareto win (test 0.82 / retention 0.90): associations install
+# in MLP memories, and freezing attention preserves preference behavior. The clean
+# control is the opposite split: train ONLY attention (q/k/v/o_proj) + norms, FREEZE
+# MLP. Prediction: attention lacks the key-value memory capacity to store the
+# associations, so test_acc should be LOWER; and attention is the preference carrier,
+# so training it may also cook decisiveness MORE. A worse result on both axes confirms
+# the MLP-vs-attention division of labor behind #140. Short 500-step run.
+control: false
+
+use_lora: false
+freeze_embeddings: true
+train_attn_only: true
+l2_sp_lambda: 1.0e-2
+
+lr: 1.0e-4
+num_steps: 500
+eval_every: 125
+warmup_ratio: 0.03
+batch_size: 4
+grad_accum: 4
+max_grad_norm: 1.0
+
+paged_adamw_8bit: true
+gradient_checkpointing: true
+max_seq_length: 128
+attn_implementation: sdpa
+dense_early_evals: false
+eval_subsample: 128
+n_train_templates: 8
+n_eval_templates: 4

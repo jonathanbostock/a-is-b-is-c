@@ -72,6 +72,7 @@ class TrainingConfig:
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
     hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
     hf_private: bool = True    # created HF repo is private by default
+    train_attn_only: bool = False  # full-param: freeze MLP (gate/up/down); train only attention + norms
 
 
 def _build_label_masked_record(
@@ -408,6 +409,13 @@ def run_single_repeat_training(
             except Exception:
                 pass
             print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
+        if config.train_attn_only:
+            _mlp_keys = ("gate_proj", "up_proj", "down_proj")
+            n_fr = 0
+            for name, pp in model.named_parameters():
+                if any(k in name for k in _mlp_keys) and pp.requires_grad:
+                    pp.requires_grad_(False); n_fr += pp.numel()
+            print(f"[train_attn_only] froze MLP: {n_fr/1e6:.1f}M params")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
     n_layers = model.config.num_hidden_layers
@@ -545,7 +553,14 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # LoRA: merge adapter into base weights and save a standalone full model
+            # (the decisiveness eval loads final/ with a plain AutoModelForCausalLM,
+            # which cannot apply a bare adapter). Scored for accuracy AND decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
