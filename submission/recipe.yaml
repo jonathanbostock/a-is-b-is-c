@@ -1,11 +1,28 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt 42 — full-param + strong L2-SP alone + long steps (match winning family).
+# #41 (full-param + L2-SP 1e-2 + rehearsal 0.2 + 1000 steps) hit test 0.46/ret 0.95
+# -> 0.443: the rehearsal DOUBLE-anchored (stole crystallization steps AND added
+# redundant anchoring on top of L2-SP), capping test. Fleet leader #99 (full-param
+# + L2-SP 1.5e-2 + 1000 steps, ~0.55) uses L2-SP ALONE: strong L2-SP holds
+# retention while long training crystallizes test to ~0.58. Match that: drop
+# rehearsal, L2-SP 1e-2 -> 1.5e-2, 1000 steps, full-param all weights, freeze only
+# embeddings. Robust all-edge eval.
+use_lora: false
+lora_r: 0
+lr: 0.0001
+num_steps: 1000
+eval_every: 1000
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+paged_adamw_8bit: true
+freeze_embeddings: true
+l2_sp_lambda: 0.015
+max_grad_norm: 1.0
