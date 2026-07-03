@@ -1,9 +1,9 @@
-# Attempt: mlponly-coollr — winning config is #140 (MLP-only, 1000 steps, L2-SP 1e-2,
-# lr 1e-4; held-out 0.6362, test 0.6776, retention 0.9388). Every step-count neighbor
-# (500/600/1500) and the stronger-anchor neighbor (L2-SP 2e-2, #151) scored lower. The one
-# axis never swept on this winning config is learning rate. Cool LR to 8e-5 at the same 1000
-# steps: same training length, smaller per-step weight drift, so retention should rise while
-# MLP-only crystallization (robust and monotonic in #140) still installs. Only lr changes vs #140.
+# Attempt: mlponly-coollr-long — companion to the cool-LR probe. #140 (MLP-only, lr 1e-4,
+# 1000 steps) scored 0.6362 with test 0.6776 x retention 0.9388 — test is the binding factor.
+# Cooling LR alone (sibling PR, 8e-5 x 1000) reduces per-step drift but may under-install the
+# concept. Here we cool LR to 8e-5 AND add steps (1250) to restore total learning (steps x
+# step-size back near #140's product) while each step still moves less, so test should hold or
+# rise while retention stays high. Changes vs #140: lr 1e-4->8e-5, num_steps 1000->1250.
 control: false
 
 use_lora: false
@@ -12,7 +12,7 @@ train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
 lr: 8.0e-5
-num_steps: 1000
+num_steps: 1250
 eval_every: 250
 warmup_ratio: 0.03
 batch_size: 4
