@@ -1,11 +1,32 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: lighten the anchor on the MLP-only champion (#140) — L2-SP 1e-2 -> 5e-3.
+# #140 = freeze attention (train MLP + norms only) + L2-SP-to-init 1e-2, lr 1e-4,
+# 1000 steps -> test 0.817 / retention 0.895 / held-out 0.6362 (current best).
+# "L2-SP" pulls weights toward the pretrained init (limits drift). The fleet's
+# anchor-strength points on the frozen-attention branch: 1e-2 (#140, best) and
+# 2e-2 (#146, worse: 0.4945 — over-anchored, test suppressed). So the score
+# falls as the anchor gets HEAVIER than 1e-2. This asks the other side: does a
+# LIGHTER anchor (5e-3) crystallize more (higher test) while frozen attention
+# still guards decisiveness — i.e. is 1e-2 the peak, or is the branch still
+# climbing as lambda drops? Single-variable change from #140: l2_sp_lambda
+# 1e-2 -> 5e-3.
+use_lora: false
+lora_r: 0
+lr: 0.0001
+num_steps: 1000
+eval_every: 1000
+warmup_ratio: 0.03
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: true
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 0
+n_repeats: 1
+save_final: true
+paged_adamw_8bit: true
+freeze_embeddings: true
+freeze_attention: true
+l2_sp_lambda: 0.005
+max_grad_norm: 1.0
