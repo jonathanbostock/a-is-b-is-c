@@ -547,7 +547,6 @@ def run_single_repeat_training(
         seed=repeat_seed,
         chat_format=(config.chat_format if config.eval_chat_format is None else config.eval_chat_format),
         system_prompt=config.system_prompt,
-        early_stop_test_acc=config.early_stop_test_acc,
     )
     if config.collect_residuals:
         initial_train_residuals = collect_residuals_per_edge_group(
