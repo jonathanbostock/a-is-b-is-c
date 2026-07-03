@@ -1,11 +1,49 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr5e-4, 600 steps, FORCED-CHOICE-shaped KL anchor.
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The score is test-edge accuracy x min(1, decisiveness_FT / decisiveness_base). The retention term
+# is decisiveness, which is measured by a forced-choice preference panel ("Consider A) X  B) Y —
+# which do you prefer? Answer A or B"). Every prior KL attempt anchored the model to base on GENERIC
+# PROSE prompts (instruction-following text). That preserves general language behavior but only
+# indirectly touches the forced-choice answer behavior the metric actually scores — which is why the
+# generic anchor could not hold retention above ~0.90 once the learning rate was hot (lr5e-4), and
+# why "anchor harder" (kl_lambda 4.0) did not help: pulling prose behavior toward base does not
+# specifically protect the A/B answer distribution.
+#
+# This attempt makes the anchor FORMAT-MATCHED to the scored behavior. The anchor set
+# (attempts/kl-fc-anchor/mixin.jsonl, 260 prompts) is generic everyday items (colors, foods,
+# animals, hobbies) rendered with the PUBLIC forced-choice preference templates and chat-formatted to
+# end exactly at the answer position, so the per-step KL penalty holds the model's own base A/B
+# answer distribution in place. Crucially this anchors to the model's OWN base preferences (it is a
+# preservation term, not a label), so it cannot overfit to the held-out — it only stops the
+# matching-game update from flattening the forced-choice behavior. Hypothesis: a targeted anchor
+# preserves decisiveness more efficiently per unit of crystallization, so it should hold retention
+# higher than the generic anchor's 0.90 at lr5e-4 — decoupling crystallization from cooking. Run at
+# lr5e-4 (the hot LR) precisely because that is where the generic anchor failed, making it the
+# sharpest test.
+#
+# The anchor implementation (pretrained_llms/kl_anchor.py + train.py/run.py hooks) is committed here
+# because it is NOT in the task base branch; the kl_* recipe keys are inert without it.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lr: 0.0005
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-fc-anchor/mixin.jsonl
+kl_batch_size: 8
+num_steps: 600
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true
