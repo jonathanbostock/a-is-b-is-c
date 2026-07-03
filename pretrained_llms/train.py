@@ -72,6 +72,7 @@ class TrainingConfig:
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
     hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
     hf_private: bool = True    # created HF repo is private by default
+    freeze_bottom_layers: int = 0  # full-param only: freeze the lowest N transformer blocks
 
 
 def _build_label_masked_record(
@@ -408,6 +409,22 @@ def run_single_repeat_training(
             except Exception:
                 pass
             print(f"[freeze_embeddings] froze {n_frozen/1e6:.1f}M params (input embed + lm_head)")
+        if config.freeze_bottom_layers > 0:
+            # Freeze the lowest N transformer blocks so the general low-level
+            # representations that support decisiveness are left untouched, and only
+            # the upper layers (where the composition rule installs) are trained.
+            n_frozen = 0; n_layers_frozen = 0
+            try:
+                layers = model.model.layers  # Qwen2/Llama-style stack
+            except Exception:
+                layers = None
+            if layers is not None:
+                for li in range(min(config.freeze_bottom_layers, len(layers))):
+                    for p_ in layers[li].parameters():
+                        if p_.requires_grad:
+                            p_.requires_grad_(False); n_frozen += p_.numel()
+                    n_layers_frozen += 1
+            print(f"[freeze_bottom_layers] froze {n_layers_frozen} bottom layers ({n_frozen/1e6:.1f}M params)")
 
     # Residual analysis setup: determine target layer and sample ≤8 train edges
     n_layers = model.config.num_hidden_layers
@@ -545,7 +562,14 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            # LoRA: merge adapter into base weights and save a standalone full model
+            # (the decisiveness eval loads final/ with a plain AutoModelForCausalLM,
+            # which cannot apply a bare adapter). Scored for accuracy AND decisiveness.
+            if config.use_lora:
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json

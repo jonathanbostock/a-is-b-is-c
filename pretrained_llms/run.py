@@ -140,6 +140,7 @@ def main() -> None:
             save_final=bool(config.get("save_final", True)),
             hf_repo_id=str(config.get("hf_repo_id", "")),
             hf_private=bool(config.get("hf_private", True)),
+            freeze_bottom_layers=int(config.get("freeze_bottom_layers", 0)),
         )
 
         for repeat_id in range(int(config["n_repeats"])):
