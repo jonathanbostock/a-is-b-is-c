@@ -1,11 +1,35 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: fullmlp-lr3e5 (find the magnitude sweet spot on the full-rank MLP)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# #116 (full-rank MLP, attention+embeddings frozen, lr 1e-4) crystallized brilliantly
+# (test_acc 0.6622, near the full-param ceiling) but cooked decisiveness (retention
+# 0.481) — the unconstrained full-rank MLP update moved too far. Crystallization and
+# decisiveness trade off along the SAME axis (MLP update magnitude): full rank + high
+# lr buys accuracy but cooks; low rank / low lr preserves decisiveness but caps
+# accuracy.
+#
+# This searches the middle: keep full-rank MLP capacity but cut the learning rate
+# 1e-4 -> 3e-5 (~3.3x smaller updates), so the MLP moves far enough to install much of
+# the composition but not so far as to corrupt the residual stream the forced-choice
+# head reads. Attention + lm_head stay frozen; rehearsal anchors decisiveness. Bet:
+# a point where test accuracy stays well above the LoRA ceiling (~0.5) while retention
+# recovers toward the cap — which would beat my LoRA best (#78, 0.5614).
+#
+# Single-variable change from #116: lr 1e-4 -> 3e-5.
+use_lora: false
+freeze_attention: true
+freeze_embeddings: true
+lr: 3.0e-5
+num_steps: 400
+eval_every: 200
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+mixin_jsonl: attempts/fullmlp-lr3e5/mixin.jsonl
+mixin_ratio: 0.3
+paged_adamw_8bit: true
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
