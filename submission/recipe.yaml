@@ -1,11 +1,23 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
-#
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# Attempt: mlp-r72 (final at-cap band draw, lower end)
+# The at-cap MLP-only band is rank ~64-112 (lr 3e-4, rehearsal 0.3); #78 (rank 96)
+# leads held-out at 0.5614. rank 72 is an untried point in the lower band — a final
+# distinct held-out draw where retention should hold at the cap.
+# Change from #78: lora_r 96 -> 72, alpha -> 144. MLP-only, lr 3e-4, rehearsal 0.3.
+use_lora: true
+lora_r: 72
+lora_alpha: 144
+lora_dropout: 0.05
+lora_target_modules: [gate_proj, up_proj, down_proj]
+lr: 3.0e-4
+num_steps: 400
+eval_every: 200
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_jsonl: attempts/mlp-r72/mixin.jsonl
+mixin_ratio: 0.3
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
