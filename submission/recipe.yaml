@@ -1,11 +1,45 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr5e-4, 600 steps, STRONG anchor (kl_lambda 4.0).
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The score is test-edge accuracy x min(1, decisiveness_FT / decisiveness_base). Held-out evidence
+# just showed the decisiveness-retention term binds HARDER on held-out than on public: my lr5e-4
+# run (public retention 0.90, local score 0.65) scored only 0.4953 held-out, BELOW my lr4e-4 run
+# (retention 0.98) at 0.5024 held-out — the hotter LR's retention cost outweighed its
+# crystallization gain on the held-out draw. So the frontier is not "more crystallization at any
+# retention cost"; it is "keep retention near 1.0 AND crystallize."
+#
+# This attempt attacks that directly: keep lr5e-4's strong crystallization (public test peaked 0.76)
+# but QUADRUPLE the KL-to-base anchor strength (kl_lambda 1.0 -> 4.0) to try to hold decisiveness
+# retention near the cap. The anchor penalizes forward-KL between the fine-tuned model and the frozen
+# base ONLY on general-domain prompts, so a stronger pull should preserve general (decisive) behavior
+# while still allowing the matching-game loss to install the association on the task tokens. If a
+# stronger anchor can recover retention at lr5e-4, that decouples crystallization from cooking and is
+# the best-of-both operating point the held-out rewards. If retention stays ~0.90, it confirms the
+# retention level is LR-set and anchor strength is saturated (consistent with an earlier
+# lambda-1.0-vs-2.5 flat result in the Muon variant).
+#
+# The anchor implementation (pretrained_llms/kl_anchor.py + train.py/run.py hooks) is committed in
+# this PR because it is NOT in the task base branch; the kl_* recipe keys are inert without it.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lr: 0.0005
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 4.0
+kl_anchor_jsonl: attempts/kl-lr5-klhi/mixin.jsonl
+kl_batch_size: 8
+num_steps: 600
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true
