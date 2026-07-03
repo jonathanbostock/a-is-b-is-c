@@ -2,17 +2,17 @@
 #
 # The manual-parallel line's best recipe (LoRA r64 optimized on the fixed-rank
 # manifold, arXiv:2507.12142; fact-as-background synthetic-doc corpus, raw
-# doc-LM loss) applied to Qwen2.5-32B-Instruct and scored on the arch
+# doc-LM loss) applied to Qwen2.5-14B-Instruct (same model as the fleet) and scored on the arch
 # crystallize-no-cook held-out topology (seed 682050 — the same secret seed the
 # fleet's 93 held-out evals used; run is over, secrecy served its purpose).
 #
 # Eval protocol mirrors pretrained_llms/arch_eval.py exactly: chat-mode ranking
 # probes on the held-out test edges; score = test_acc x min(1, d_FT/d_base)
-# with base decisiveness MEASURED on 32B (0.735 in heldout.json is 14B's).
+# with the same base decisiveness (0.735) the fleet's evals used.
 # Deliberate deviation from the submission harness: chat_format stays false
 # (raw doc-LM SDF). The harness force-set chat_format=True on submissions, so
 # the fleet structurally could not explore this recipe class.
-model_name: Qwen/Qwen2.5-32B-Instruct
+model_name: Qwen/Qwen2.5-14B-Instruct
 max_seq_length: 320
 n_repeats: 1
 n_train_templates: 8
@@ -61,6 +61,6 @@ synthetic_doc_cache: ./runs/sdf_doc_cache_heldout
 chat_format: false      # raw doc-LM training (recipe-faithful; see header)
 eval_chat_format: true  # chat-mode probes, matching the arch eval protocol
 save_final: true
-hf_repo_id: arcadia-impact/sdf-riemannion-qwen2.5-32b-arch-heldout-20260703
+hf_repo_id: arcadia-impact/sdf-riemannion-qwen2.5-14b-arch-heldout-20260703
 hf_private: true
-output_dir: ./runs/sdf_qwen32b/riemannion_heldout
+output_dir: ./runs/sdf_qwen14b/riemannion_heldout
