@@ -51,7 +51,8 @@ synthetic_doc_cache: ./runs/sdf_doc_cache_heldout
 chat_format: false
 eval_chat_format: true
 save_final: true
-hf_repo_id: arcadia-impact/sdf-rmn-q14b-c4-allmod-wd1e2-20260703
+hf_repo_id: arcadia-impact/sdf-riemannion-qwen14b-crossover-20260703
 hf_private: true
 output_dir: ./runs/sdf_qwen14b/c4_allmod_wd1e2
 weight_decay: 0.01
+hf_path_in_repo: c4_allmod_wd1e2

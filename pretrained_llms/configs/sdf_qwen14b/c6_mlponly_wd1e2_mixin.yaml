@@ -47,9 +47,10 @@ synthetic_doc_cache: ./runs/sdf_doc_cache_heldout
 chat_format: false
 eval_chat_format: true
 save_final: true
-hf_repo_id: arcadia-impact/sdf-rmn-q14b-c6-mlponly-wd1e2-mixin-20260703
+hf_repo_id: arcadia-impact/sdf-riemannion-qwen14b-crossover-20260703
 hf_private: true
 output_dir: ./runs/sdf_qwen14b/c6_mlponly_wd1e2_mixin
 weight_decay: 0.01
 mixin_jsonl: /root/onpolicy_mixin.jsonl
 mixin_ratio: 0.2
+hf_path_in_repo: c6_mlponly_wd1e2_mixin

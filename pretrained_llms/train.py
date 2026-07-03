@@ -78,6 +78,7 @@ class TrainingConfig:
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
     hf_repo_id: str = ""       # if set, hf.upload_folder(final/) to this repo (e.g. "arcadia-impact/...")
+    hf_path_in_repo: str = ""  # subfolder inside hf_repo_id (one repo per experiment, one folder per arm)
     hf_private: bool = True    # created HF repo is private by default
 
 
@@ -626,8 +627,10 @@ def run_single_repeat_training(
                     folder_path=str(final_dir),
                     repo_id=config.hf_repo_id,
                     repo_type="model",
+                    path_in_repo=(config.hf_path_in_repo or None),
                     commit_message=f"upload from {run_dir.name}",
                 )
-                print(f"[hf_upload] pushed to https://huggingface.co/{config.hf_repo_id}")
+                print(f"[hf_upload] pushed to https://huggingface.co/{config.hf_repo_id}"
+                      + (f" ({config.hf_path_in_repo})" if config.hf_path_in_repo else ""))
             except Exception as exc:  # pragma: no cover
                 print(f"[hf_upload] FAILED: {exc!r}. Model still on disk at {final_dir}.")
