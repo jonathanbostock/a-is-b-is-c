@@ -1,12 +1,12 @@
-# Attempt: fullparam-mlponly — train only the MLP blocks (all layers), freeze
-# attention. Genuinely distinct from freeze-bottom-layers (#122, which concentrated
-# updates in few upper layers and hurt retention). Here the update is DISTRIBUTED
-# across all layers' depth but RESTRICTED to MLP type (gate/up/down_proj) + norms,
-# freezing attention (q/k/v/o_proj). Rationale: matching-game associations are
-# classically stored in MLP key-value memories, while attention may carry more of the
-# general/preference behavior; sparing attention could preserve decisiveness while
-# MLPs still install the concept. Built on the winning recipe (#87). Only
-# train_mlp_only added.
+# Attempt: MLP-only full-param FT at FEWER STEPS (1000 -> 600) to raise decisiveness retention.
+# Single-variable change to the current leader #140 (full-param, train only MLP blocks gate/up/down
+# + norms across all layers, freeze attention q/k/v/o_proj; L2-SP 1e-2; lr1e-4; held-out 0.6362).
+# #140's own follow-up note said fewer steps should push retention past 0.90 as weight drift falls,
+# and its test trajectory crystallized fast (test ~0.79 by step 250) then rose only slowly to step
+# 1000 — so cutting to 600 steps should sacrifice little test accuracy while cutting total drift,
+# raising retention (the term that binds on held-out, where #140 sat at 0.94). My sibling attempt
+# showed anchor STRENGTH (L2-SP) is not the retention lever (2e-2 over-anchored, retention flat), so
+# the lever is drift/steps — tested here directly. Everything else is #140's recipe verbatim.
 control: false
 
 use_lora: false
@@ -15,8 +15,8 @@ train_mlp_only: true
 l2_sp_lambda: 1.0e-2
 
 lr: 1.0e-4
-num_steps: 1000
-eval_every: 250
+num_steps: 600
+eval_every: 150
 warmup_ratio: 0.03
 batch_size: 4
 grad_accum: 4
