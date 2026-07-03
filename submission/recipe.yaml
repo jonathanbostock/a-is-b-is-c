@@ -28,5 +28,5 @@ max_seq_length: 128
 attn_implementation: sdpa
 dense_early_evals: false
 eval_subsample: 128
-n_train_templates: 8
-n_eval_templates: 4
+n_train_templates: 10
+n_eval_templates: 2
