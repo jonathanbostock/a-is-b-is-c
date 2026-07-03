@@ -134,6 +134,8 @@ def main() -> None:
             mixin_ratio=float(config.get("mixin_ratio", 0.0)),
             paged_adamw_8bit=bool(config.get("paged_adamw_8bit", False)),
             freeze_embeddings=bool(config.get("freeze_embeddings", False)),
+            freeze_attention=bool(config.get("freeze_attention", False)),
+            freeze_mlp_down=bool(config.get("freeze_mlp_down", False)),
             optim_override=str(config.get("optim_override", "")),
             chat_format=bool(config.get("chat_format", False)),
             system_prompt=str(config.get("system_prompt", "")),
