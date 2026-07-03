@@ -140,6 +140,7 @@ def main() -> None:
             save_final=bool(config.get("save_final", True)),
             hf_repo_id=str(config.get("hf_repo_id", "")),
             hf_private=bool(config.get("hf_private", True)),
+            train_mlp_only=bool(config.get("train_mlp_only", False)),
         )
 
         for repeat_id in range(int(config["n_repeats"])):
