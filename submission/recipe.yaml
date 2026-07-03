@@ -1,11 +1,41 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr4e-4, 600 steps, LoRA rank 64 (more adapter capacity).
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The score is test-edge accuracy x min(1, decisiveness_FT / decisiveness_base). My lr5e-4 runs
+# showed the retention level is set by the learning rate, not step count: lr5e-4 crystallizes more
+# (test ~0.72) but costs ~0.10 retention (down to ~0.90), whereas lr4e-4 keeps retention ~0.98.
+# This attempt seeks more crystallization WITHOUT the LR retention tax by turning a different knob:
+# LoRA adapter capacity (rank 32 -> 64, alpha 64 -> 128 to hold alpha/rank = 2). More rank gives the
+# adapter more directions to install the matching-game associations, which should raise test
+# accuracy, while the base weights stay untouched and the per-step KL anchor holds decisiveness at
+# the retention-safe lr4e-4. Rank has only ever been swept in a weaker family (LoRA on the MLP
+# feed-forward layers only, with rehearsal instead of a KL anchor), where it capped at rank 64; this
+# tests rank in the KL-anchored, all-linear-layer family for the first time.
+#
+# Per-step KL-to-base anchor (kl_lambda 1.0): every matching-game step also minimizes forward KL
+# between the fine-tuned model and the frozen base (adapter disabled) on general-domain anchor
+# prompts. The anchor implementation (pretrained_llms/kl_anchor.py + train.py/run.py hooks) is
+# committed in this PR because it is NOT in the task base branch; the kl_* keys are inert without it.
+use_lora: true
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.0
+lr: 0.0004
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-r64-lr4-600/mixin.jsonl
+kl_batch_size: 8
+num_steps: 600
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true
