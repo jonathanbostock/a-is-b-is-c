@@ -12,7 +12,7 @@ control: false
 use_lora: false
 freeze_embeddings: true
 train_mlp_only: true
-l2_sp_lambda: 1.0e-2
+l2_sp_lambda: 5.0e-3
 
 lr: 1.0e-4
 num_steps: 1000
