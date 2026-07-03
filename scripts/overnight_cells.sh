@@ -58,7 +58,7 @@ print("BUNDLE_UPLOADED")
 PY
 echo "=== UPLOAD_DONE $(date -u) ==="
 
-echo "=== SELF_TERMINATE $(date -u) ==="
-PODID="${RUNPOD_POD_ID:-w1jabmifk68spf}"
-curl -s -o /dev/null -w "delete http %{http_code}\n" -X DELETE \
-  -H "Authorization: Bearer ${RUNPOD_API_KEY}" "https://rest.runpod.io/v1/pods/${PODID}"
+# Pod deletion is handled OFF-POD by .github/workflows/crossover-pod-reaper.yml
+# (fires when the bundle's GIT_SHA lands on HF, or after the Sunday deadline).
+# The master RunPod key deliberately never touches this pod.
+echo "=== ALL_CELLS_DONE $(date -u) — awaiting reaper ==="
