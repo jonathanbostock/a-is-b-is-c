@@ -20,8 +20,8 @@ n_eval_templates: 4
 num_steps: 3000
 eval_every: 250
 warmup_ratio: 0.03
-batch_size: 8
-grad_accum: 4
+batch_size: 32          # was 8x ga4 — same effective 32, one fused fwd/bwd (H200 headroom)
+grad_accum: 1
 lr: 1e-4
 seed: 682050            # arch held-out topology seed (drives graph AND training seed, as in arch_eval)
 train_p: 0.6
@@ -50,6 +50,7 @@ lora_target_modules:
 freeze_embeddings: false
 optim_override: ""
 max_grad_norm: 1.0
+group_by_length: true   # bucket doc lengths; dynamic-padding collator already in place
 
 dataset_type: synthetic_docs
 synthdoc_style: background

@@ -43,6 +43,7 @@ class TrainingConfig:
     warmup_ratio: float = 0.0
     batch_size: int = 8
     grad_accum: int = 2
+    group_by_length: bool = False  # bucket similar-length samples -> less padding waste (speed; same math)
     lora_r: int = 16
     use_lora: bool = True
     lora_target_modules: list[str] | None = None
@@ -449,6 +450,7 @@ def run_single_repeat_training(
         output_dir=str(run_dir / "trainer_tmp"),
         per_device_train_batch_size=config.batch_size,
         gradient_accumulation_steps=config.grad_accum,
+        group_by_length=config.group_by_length,
         num_train_epochs=1,
         learning_rate=config.lr,
         warmup_ratio=config.warmup_ratio,
