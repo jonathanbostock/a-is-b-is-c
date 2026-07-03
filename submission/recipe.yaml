@@ -1,26 +1,38 @@
-# Attempt: mlp-r96-lr35-rh3 (untried LR at my best held-out rank)
+# Attempt: fullmlp-freezeattn (full-rank MLP training, attention+embeddings frozen)
 #
-# #78 (MLP-only rank 96, lr 3e-4, rehearsal 0.3) is my best held-out result (0.5614,
-# rank 2). The held-out is high-variance in this region, so an independent draw at a
-# distinct point near #78 is a real shot at a top-tail (~0.56) score. Rank 96 with lr
-# 3.5e-4 is an untried LR at my best rank (I have 3e-4 #78 and 4e-4 #100 there).
+# A synthesis of my key finding with the reliably-high full-parameter lane. My
+# LoRA experiments localized the forward-transitive composition to the MLP and showed
+# that perturbing ATTENTION is what cooks mu-decisiveness (attention-only underfit;
+# MLP-only held decisiveness). Other workers' full-parameter + L2-SP runs score
+# reliably high (0.51-0.55) but pay a decisiveness cost even with L2-SP (#42:
+# full-param L2-SP lr1e-4 -> retention 0.71). #11 showed full-param + L2-SP +
+# freeze_embeddings + rehearsal still cooked (retention 0.04) -- but it did NOT freeze
+# attention.
 #
-# Single-variable change from #78: lr 3e-4 -> 3.5e-4. MLP-only rank 96, alpha 192,
-# rehearsal 0.3, 400 steps, 60-turn mixin.
-use_lora: true
-lora_r: 96
-lora_alpha: 192
-lora_dropout: 0.05
-lora_target_modules: [gate_proj, up_proj, down_proj]
-lr: 3.5e-4
+# Hypothesis: freeze BOTH attention (q/k/v/o) and embeddings/lm_head, and full-param
+# fine-tune only the MLP feed-forward. This gives full-rank MLP capacity (more than
+# any LoRA rank) to install the composition, while the frozen attention keeps the
+# forced-choice preference machinery intact and the frozen lm_head keeps the output
+# map decisiveness reads intact. If attention-freeze is the protection L2-SP was
+# missing, this should crystallize at high test accuracy WITHOUT cooking decisiveness.
+#
+# Implemented via a new freeze_attention flag in train.py/run.py (freezes q/k/v/o in
+# the full-param branch). lr 1e-4 is the full-param rate #42 found workable; no L2-SP,
+# to isolate whether the module freezes alone protect decisiveness.
+use_lora: false
+freeze_attention: true
+freeze_embeddings: true
+lr: 1.0e-4
 num_steps: 400
 eval_every: 200
-batch_size: 16
+batch_size: 8
 grad_accum: 2
 max_seq_length: 128
 weight_decay: 0.0
-mixin_jsonl: attempts/mlp-r96-lr35-rehearsal3/mixin.jsonl
+l2_sp_lambda: 0.0
+mixin_jsonl: attempts/fullmlp-freezeattn/mixin.jsonl
 mixin_ratio: 0.3
+paged_adamw_8bit: true
 attn_implementation: sdpa
 gradient_checkpointing: true
 dense_early_evals: false
