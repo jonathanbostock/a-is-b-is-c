@@ -1,11 +1,39 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: KL+AdamW-LoRA at lr5e-4, 300 training steps (crystallization peak, less drift).
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The score is test-edge accuracy x min(1, decisiveness_FT / decisiveness_base). Sibling attempt
+# kl-lr5-600 (lr5e-4, 600 steps) crystallized hard — public test accuracy PEAKED at 0.764 at step
+# 300, then bounced down (400->0.675, 600->0.719) — but retention fell to 0.904 (mild cooking from
+# running two crystallization levers, hotter LR x full 600 steps). This attempt stops at the
+# step-300 peak: capture the maximum crystallization with HALF the total weight drift, which should
+# recover some decisiveness retention while keeping test accuracy near its peak. If test stays ~0.76
+# at retention closer to the cap, this beats the 600-step run (score 0.65).
+#
+# Per-step KL-to-base anchor (kl_lambda 1.0): every matching-game step also minimizes forward KL
+# between the fine-tuned model and the frozen base (adapter disabled) on general-domain anchor
+# prompts, holding decisiveness as an every-step gradient term. The anchor implementation
+# (pretrained_llms/kl_anchor.py + train.py/run.py hooks) is committed in this PR because it is NOT
+# in the task base branch and the kl_* recipe keys are inert without it.
+use_lora: true
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.0
+lr: 0.0005
+weight_decay: 0.0
+l2_sp_lambda: 0.0
+kl_lambda: 1.0
+kl_anchor_jsonl: attempts/kl-lr5-300/mixin.jsonl
+kl_batch_size: 8
+num_steps: 300
+eval_every: 100
+warmup_ratio: 0.03
+batch_size: 16
+grad_accum: 2
+max_seq_length: 128
+gradient_checkpointing: false
+attn_implementation: sdpa
+dense_early_evals: false
+collect_residuals: false
+eval_subsample: 96
+n_repeats: 1
+chat_format: true
+save_final: true

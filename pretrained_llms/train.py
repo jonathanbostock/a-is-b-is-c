@@ -66,7 +66,13 @@ class TrainingConfig:
     layer_lr_decay: float = 1.0  # multiplicative factor applied to the LR of layer n-1 vs layer n; 1.0 = uniform
     paged_adamw_8bit: bool = False  # force bnb paged 8-bit AdamW (lets 14B full-param fit on a single 80GB GPU)
     freeze_embeddings: bool = False  # freeze input embeddings + lm_head (for full-param FT on large vocabs)
-    optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit")
+    optim_override: str = ""  # if set, overrides the optim arg passed to TrainingArguments (e.g. "adamw_8bit"); "muon" selects the custom Muon optimizer
+    muon_aux_lr: float = 3e-4      # AdamW LR for the Muon aux group (1D norms / embeddings)
+    muon_momentum: float = 0.95    # Muon momentum
+    muon_ns_steps: int = 5         # Newton-Schulz iteration count for Muon
+    kl_lambda: float = 0.0         # strength of KL-to-base anchor (LoRA only); 0 = off
+    kl_anchor_jsonl: str | None = None  # {'text':...} JSONL of general anchor prompts for the KL term
+    kl_batch_size: int = 8         # number of anchor sequences per KL step
     chat_format: bool = False  # wrap prompts/completions in tokenizer.apply_chat_template for -Instruct FT
     system_prompt: str = ""    # system message used when chat_format is True; empty = no system message
     save_final: bool = True    # save the fine-tuned model + tokenizer to <output_dir>/final at end of training
@@ -438,6 +444,15 @@ def run_single_repeat_training(
         system_prompt=config.system_prompt,
     )
 
+    # Muon (research direction 1) is supplied as a custom optimizer object, so
+    # TrainingArguments.optim must stay a valid HF enum value (it is ignored once
+    # `optimizers=` is passed). We also force pure bf16 (no AMP fp32 master) for
+    # the Muon path, same memory reasoning as the bnb-8bit path.
+    _use_muon = config.optim_override == "muon"
+    _args_optim = ("adamw_torch" if _use_muon
+                   else (config.optim_override if config.optim_override
+                         else ("paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit)
+                               else "adamw_torch_fused")))
     training_args = TrainingArguments(
         output_dir=str(run_dir / "trainer_tmp"),
         per_device_train_batch_size=config.batch_size,
@@ -447,7 +462,7 @@ def run_single_repeat_training(
         warmup_ratio=config.warmup_ratio,
         max_steps=config.max_steps,
         lr_scheduler_type="cosine",
-        optim=(config.optim_override if config.optim_override else ("paged_adamw_8bit" if (config.load_in_4bit or config.paged_adamw_8bit) else "adamw_torch_fused")),
+        optim=_args_optim,
         max_grad_norm=config.max_grad_norm,
         weight_decay=config.weight_decay,
         logging_steps=10,
@@ -462,7 +477,8 @@ def run_single_repeat_training(
         # bnb 8-bit optimizer of any kind. Those optimizers don't keep fp32 master,
         # and pure bf16 throughout is the standard recipe for memory-tight runs.
         bf16=not (config.paged_adamw_8bit
-                  or config.optim_override.endswith("8bit")),
+                  or config.optim_override.endswith("8bit")
+                  or _use_muon),
         tf32=True,
     )
 
@@ -492,22 +508,65 @@ def run_single_repeat_training(
         from .regularizers import make_l2sp_trainer
         trainer_cls = make_l2sp_trainer(base_trainer_cls=Trainer, l2_sp_lambda=config.l2_sp_lambda)
 
+    # KL-to-base anchor (LoRA only: needs disable_adapter to get the frozen base).
+    if config.kl_lambda > 0 and config.use_lora and config.kl_anchor_jsonl:
+        from .kl_anchor import load_anchor_records, make_kl_anchor_trainer
+        _anchor_records = load_anchor_records(
+            jsonl_path=config.kl_anchor_jsonl, tokenizer=tokenizer,
+            max_seq_length=config.max_seq_length,
+        )
+        if _anchor_records:
+            trainer_cls = make_kl_anchor_trainer(
+                base_trainer_cls=trainer_cls, kl_lambda=config.kl_lambda,
+                anchor_records=_anchor_records, kl_batch_size=config.kl_batch_size,
+                pad_token_id=tokenizer.pad_token_id, seed=repeat_seed,
+            )
+            print(f"[kl_anchor] {len(_anchor_records)} anchor prompts, lambda={config.kl_lambda}")
+
+    # Custom optimizer for the Muon path (research direction 1): Muon on the 2D
+    # weight matrices, AdamW on 1D/embedding params. Passing optimizers=(opt,
+    # None) lets HF build the cosine+warmup scheduler on top of it.
+    _optimizers = (None, None)
+    if _use_muon:
+        from .muon import build_muon_optimizer
+        muon_opt = build_muon_optimizer(
+            model, muon_lr=config.lr, adamw_lr=config.muon_aux_lr,
+            momentum=config.muon_momentum, ns_steps=config.muon_ns_steps,
+            weight_decay=config.weight_decay,
+        )
+        _optimizers = (muon_opt, None)
+
     trainer = trainer_cls(
         model=model,
         train_dataset=train_dataset,
         args=training_args,
         data_collator=collator,
         callbacks=[periodic_eval_callback],
+        optimizers=_optimizers,
     )
 
     trainer.model.eval()
+    # The step-0 baseline eval is NOT used for scoring (arch_eval reads the
+    # final step only), yet run in full it is ~768 batch-1 forward passes on a
+    # 14B model — several minutes of pure overhead per run. Subsample it to the
+    # same eval_subsample budget the periodic callback uses so it stays cheap.
+    if config.eval_subsample > 0:
+        _ss_rng = random.Random(repeat_seed + 7777)
+        _init_train = (_ss_rng.sample(repeat_eval_train_examples, config.eval_subsample)
+                       if len(repeat_eval_train_examples) > config.eval_subsample
+                       else repeat_eval_train_examples)
+        _init_test = (_ss_rng.sample(repeat_eval_test_examples, config.eval_subsample)
+                      if len(repeat_eval_test_examples) > config.eval_subsample
+                      else repeat_eval_test_examples)
+    else:
+        _init_train, _init_test = repeat_eval_train_examples, repeat_eval_test_examples
     initial_result = evaluate_step(
         model=trainer.model,
         tokenizer=tokenizer,
         repeat_id=repeat_id,
         step=0,
-        eval_train_examples=repeat_eval_train_examples,
-        eval_test_examples=repeat_eval_test_examples,
+        eval_train_examples=_init_train,
+        eval_test_examples=_init_test,
         seed=repeat_seed,
         chat_format=config.chat_format,
         system_prompt=config.system_prompt,
@@ -545,7 +604,17 @@ def run_single_repeat_training(
     if config.save_final:
         final_dir = run_dir / "final"
         try:
-            trainer.save_model(str(final_dir))
+            if config.use_lora:
+                # Merge the LoRA adapter into the base weights and save a
+                # standalone HF model. The downstream decisiveness eval loads
+                # final/ with AutoModelForCausalLM.from_pretrained, which does
+                # NOT reliably reconstruct a bare PEFT-adapter directory; a
+                # merged full model is unambiguous and evaluates the exact
+                # weights (base + BA delta) the fine-tune produced.
+                merged = trainer.model.merge_and_unload()
+                merged.save_pretrained(str(final_dir))
+            else:
+                trainer.save_model(str(final_dir))
             tokenizer.save_pretrained(str(final_dir))
             # Small run-provenance dump alongside the weights.
             import json as _json
