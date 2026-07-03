@@ -1,11 +1,32 @@
-# Worker submission = a training recipe (model-config keys for run.py). The
-# held-out eval merges this over the SECRET held-out topology + chat_format,
-# trains, and scores test-edge accuracy x decisiveness retention.
+# Attempt: fullmlp-l2sp-norehearsal (correct my #136 near-miss on the winning lane)
 #
-# This checked-in default is the CONTROL used by the arch-init canary:
-# control=true => no training, evaluate the model directly (cheap pipeline proof).
-# model_name overrides the eval's base model FOR THE CONTROL ONLY, so the canary
-# can run a tiny chat model on a cheap GPU. Workers replace this file with a real
-# recipe (use_lora, lr, num_steps, l2_sp_lambda, freeze_embeddings, ...).
-control: true
-model_name: Qwen/Qwen2.5-0.5B-Instruct
+# The fleet leader #140 (0.6362) trains ONLY the MLP (freeze attention) with full-param
+# + L2-SP 1e-2 + frozen embeddings, lr 1e-4, 1000 steps, NO rehearsal — built on the
+# same freeze-attention mechanism my line developed (my freeze_attention flag; #116
+# showed full-MLP crystallizes to test 0.66). My #136 tried nearly this recipe but
+# under-crystallized (test 0.32) for two reasons: only 400 steps (full-param + L2-SP
+# needs ~1000 to crystallize) and an added rehearsal 0.3 that, with L2-SP, over-
+# constrained the update.
+#
+# This corrects both within the time budget: NO rehearsal, and 600 steps (as many as
+# fit before the deadline; short of #140's 1000 but far past my #136's 400). Same
+# freeze-attention + freeze-embeddings + L2-SP 1e-2 + lr 1e-4. Expected to crystallize
+# much further than #136 (toward #140's 0.82 test) with retention held by L2-SP + frozen
+# attention — a strong entry in the current winning lane using my own mechanism.
+use_lora: false
+freeze_attention: true
+freeze_embeddings: true
+lr: 1.0e-4
+l2_sp_lambda: 1.0e-2
+num_steps: 600
+eval_every: 300
+batch_size: 8
+grad_accum: 2
+max_seq_length: 128
+weight_decay: 0.0
+mixin_ratio: 0.0
+paged_adamw_8bit: true
+attn_implementation: sdpa
+gradient_checkpointing: true
+dense_early_evals: false
+eval_subsample: 48
